@@ -24,22 +24,32 @@ for i, tr in enumerate(soup1.select('tr')):
     for j, td in enumerate(row_data):
         data.append(td)
 
+for index, x in enumerate(data,0):
+    data[index] = str(x).replace(',','')
+
+
 arr = np.array([data[1:12], data[12:23], data[24:35], data[36:47], data[48:59], data[60:71],  data[72:83], data[84:95], data[96:107], data[108:119], data[120:131], data[132:143], data[144:155], data[156:167], data[168:179],  data[180:191]])
 df = pd.DataFrame(arr.T,columns=[data[0],data[23], data[35], data[47], data[59], data[71], data[83], data[95], data[107], data[119], data[131], data[143], data[155], data[167], data[179], data[191]])
 df.drop([10], inplace=True)
 df['Year'] = pd.to_datetime(df['Year'])
 df.columns = df.columns.str.strip()
 df.set_index('Year', inplace=True)
-#print(df.iloc[ : , 9 ])
-#print(df['Shares Mil'])
-# gca stands for 'get current axis'
-#ax = plt.gca()
+df = df.apply(pd.to_numeric, errors='coerce')
+
 column_name=[]
 for col in df.columns:
     column_name.append(col)
 
+df[column_name[5]] = df[column_name[5]].apply(lambda x: x*15)
+df[column_name[6]] = df[column_name[6]].apply(lambda x: x*15)
+
+file = "AAPL Historical Prices.csv"
+df2 = pd.read_csv(file, delimiter=',')
+df2['Date'] = pd.to_datetime(df2['Date'])
+
 f1, ax = plt.subplots(figsize = (10,5))
-#ax.xaxis_date()
-ax.autoscale_view()
-plt.plot(df[column_name[4]])
+plt.fill_between(df.index, df[column_name[5]], color = "green")
+plt.plot(df.index, df[column_name[5]], color="orange", linewidth=3)
+plt.plot(df.index, df[column_name[6]], color="white")
+plt.plot(df2["Date"], df2["Close"], color="black")
 plt.show()
