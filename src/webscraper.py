@@ -4,6 +4,7 @@
 #TODO: Fix pegc calc
 #TODO: Store data and request other graph, same symbol
 #TODO: b-shares handler
+#TODO: handler estimates-curreny != data-currency (MOWI)
 from bs4 import BeautifulSoup
 import requests
 import numpy as np
@@ -87,7 +88,6 @@ def req_handle(symbol,country,style):
     start = df.index[0]
     end = datetime.date.today()
     stock = yf.Ticker(symbol_yhoo)
-    print(symbol_yhoo)
     try:
         ycurrency = stock.info["currency"]
     except Exception as ex:
@@ -105,7 +105,6 @@ def req_handle(symbol,country,style):
 
     cut = (len(price)-len(e_total))
     currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
-    print(currency,ycurrency)
     if ycurrency != None and ycurrency !=currency:
         print(currency,ycurrency)
         start2 = datetime.date.today() - datetime.timedelta(days=7)
