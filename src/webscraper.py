@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 #TODO: Classes and functions
-#TODO: normal_multiple + blended PE
 #TODO: Labels
-#TODO: Improve growth rate calc
-#TODO: handle different currencies yahoo/morningstar (especially chinese)
-#TODO: debug error with symbol MIC, DXC, PLYM, BLDP, MOR
 #TODO: Fix pegc calc
 #TODO: Store data and request other graph, same symbol
 #TODO: b-shares handler
@@ -16,8 +12,10 @@ import json
 import matplotlib.pyplot as plt
 import datetime
 import pandas as pd
-import pandas_datareader.data as web
+import yfinance as yf
 import sys
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 def req_handle(symbol,country,style):
     killer()
@@ -30,12 +28,16 @@ def req_handle(symbol,country,style):
     else:
         symbol_morn = df.loc[country]["Morningstar"] + symbol
         symbol_yhoo = symbol + df.loc[country]["Yahoo"]
-        if country == "UK":
+        if country == "UK" and symbol == "RB":
             symbol_morn = symbol_morn + "."
+        if country == "Hongkong" and len(symbol_yhoo)<7:
+            symbol_yhoo = (7-len(symbol_yhoo))*"0" + symbol_yhoo
 
     df_est = pd.read_html(r'http://financials.morningstar.com/valuate/annual-estimate-list.action?&t={}'.format(symbol_morn),keep_default_na=False)
     df_est = pd.concat(df_est)
     df3 = pd.DataFrame([[df_est[1][4],df_est[1][6]],[df_est[4][4],df_est[4][6]]],index=[df_est[2][0],df_est[5][0]],columns=["Median EPS","Mean EPS"])
+    dropNames = df3[ df3.index.values == "—" ].index
+    df3.drop(dropNames , inplace=True)
     df3.index = pd.to_datetime(df3.index)
     df3 = df3.apply(pd.to_numeric, errors='coerce')
     est_time = df_est[2][0] + "-" + df_est[5][0]
@@ -52,13 +54,11 @@ def req_handle(symbol,country,style):
     df_est.set_index(est_time, inplace=True)
 
     url1 = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
-    url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
-
+    #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
     soup1 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url1).text)[0])['componentData'], 'lxml')
-    soup2 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url2).text)[0])['componentData'], 'lxml')
+    #soup2 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url2).text)[0])['componentData'], 'lxml')
 
     data = []
-
     for i, tr in enumerate(soup1.select('tr')):
         row_data = [td.text for td in tr.select('td, th') if td.text]
         if not row_data:
@@ -86,30 +86,60 @@ def req_handle(symbol,country,style):
 
     start = df.index[0]
     end = datetime.date.today()
-    df_daily = web.DataReader(symbol_yhoo,'yahoo',start,end)
-    test = np.array(df.index.values) #,df3.index.values)
+    stock = yf.Ticker(symbol_yhoo)
+    print(symbol_yhoo)
+    try:
+        ycurrency = stock.info["currency"]
+    except Exception as ex:
+        ycurrency = None
+        print(ex)
+    df_daily = yf.download(symbol_yhoo,start,end)
+
+    price = np.array(df.index.values) #,df3.index.values)
     for x in df3.index.values:
         if not pd.isnull(x):
-            test = np.append(test, x)
-    test2 = np.append(df[column_name[5]].values,df3["Median EPS"].values)
-    test2 = test2[~np.isnan(test2)]
-    cut = (len(test)-len(test2))
-    currency = str(df.columns[13])[-3:]
+            price = np.append(price, x)
+    e_total = np.append(pd.to_numeric(df[column_name[5]].values, errors='coerce'),pd.to_numeric(df3["Median EPS"].values, errors='coerce'))#TODO:remove duplicate
+    thecutter = ~np.isnan(e_total)
+    e_total = e_total[thecutter]
+
+    cut = (len(price)-len(e_total))
+    currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
+    print(currency,ycurrency)
+    if ycurrency != None and ycurrency !=currency:
+        print(currency,ycurrency)
+        start2 = datetime.date.today() - datetime.timedelta(days=7)
+        forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
+    if country == "UK":
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
     xlabel = []
 
-    multiple = (test2[-1]/df[column_name[5]][cut]) #**(1.0/(len(test2)-1.0))-1.0
+    e_total_index = np.append(df.index.values.astype('datetime64[D]').astype(int),df3.index.values.astype('datetime64[D]').astype(int))
+    e_total_index = e_total_index[thecutter]
 
-    df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype('datetime64[D]').astype(int) ,df.index.values.astype('datetime64[D]').astype(int) ,df[column_name[5]].values)
+    df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype('datetime64[D]').astype(int) , e_total_index, e_total)
     df_daily["blended_pe"] = df_daily["Close"]/df_daily["blended_earnings"]
+    normal_multiple = df_daily["blended_pe"].mean()
+    current_pe = df_daily["blended_pe"].iloc[-1]
+    for i, item in enumerate(e_total):
+        if item>0:
+            grw_start = i
+            grw_status = True
+            break
+    if e_total[-1]<0:
+        grw_status = False
 
-    if multiple < 0:
-        grw = ("Growth Rate: " + str(-100*((abs(multiple))**(1.0/(len(test2)-1.0))-1.0)) + "%")
-        multiple = 15
+    if grw_status:
+        num_years = len(e_total)-grw_start-1
+        grw = (((e_total[-1]/e_total[i])**(1/num_years))-1)*100 #(start/end)^(1/periods)-1
+        grw_fut = (((e_total[-1]/e_total[-3])**(1/3))-1)*100 #TODO: improve grw_fut
     else:
-        multiple = (multiple**(1.0/(len(test2)-1.0))-1.0)*100
-        #print("Growth Rate: " + str(multiple) + "%")
+        grw = 0
+        grw_fut = 0
+    multiple = grw_fut
 
-    if style == "BASE":
+    if style == "Base":
         multiple = 15.0
     elif style == "PEG":
         if multiple < 15.0:
@@ -123,20 +153,20 @@ def req_handle(symbol,country,style):
     elif style == "PEGC":
         i = 0
         print("Growth Rate", "Year")
-        for x in range(1, len(test2)):
-            gnumbers = ((test2[x] - test2[x-1]) / test2[x-1] * 100)
-            if test2[x-1] < 0:
-                print(-gnumbers, i, test2[x-1], test2[x])
+        for x in range(1, len(e_total)):
+            gnumbers = ((e_total[x] - e_total[x-1]) / e_total[x-1] * 100)
+            if e_total[x-1] < 0:
+                print(-gnumbers, i, e_total[x-1], e_total[x])
             else:
-                print(gnumbers, i, test2[x-1], test2[x])
+                print(gnumbers, i, e_total[x-1], e_total[x])
             i=i+1
         s = int(input("Type Year to start multiple calculation:"))
-        multiple = ((test2[-1]/test2.item(s))) #**(1.0/(len(test2)-s))-1.0)*100.0
+        multiple = ((e_total[-1]/e_total.item(s))) #**(1.0/(len(e_total)-s))-1.0)*100.0
         if multiple < 0:
-            print("Growth Rate: " + str(print(-100*((abs(multiple))**(1.0/(len(test2)-s))-1.0))) + "%")
+            print("Growth Rate: " + str(print(-100*((abs(multiple))**(1.0/(len(e_total)-s))-1.0))) + "%")
             multiple = 15
         else:
-            multiple = 100*(multiple**(1.0/(len(test2)-s))-1.0)
+            multiple = 100*(multiple**(1.0/(len(e_total)-s))-1.0)
             print(multiple)
             if multiple < 15:
                 multiple = 15
@@ -144,15 +174,13 @@ def req_handle(symbol,country,style):
             else:
                 print("Growth Rate: " + str(multiple) + "%")
     '''
-    normal_multiple = 16.0
-    test3= test2 * normal_multiple
+    e_total_norm= e_total * normal_multiple
     df[column_name[5]] = df[column_name[5]].apply(lambda x: x*multiple)
     df3["Median EPS"] = df3["Median EPS"]*multiple
     df[column_name[6]] = df[column_name[6]].apply(lambda x: x*multiple)
-
-    test2 = np.append(df[column_name[5]].values,df3["Median EPS"].values)
-    test2 = test2[~np.isnan(test2)]
-    test = test[(len(test)-len(test2)):]
+    e_total = np.append(pd.to_numeric(df[column_name[5]].values, errors='coerce'),pd.to_numeric(df3["Median EPS"].values, errors='coerce'))
+    e_total = e_total[~np.isnan(e_total)]
+    price = price[(len(price)-len(e_total)):]
 
     for x in df.index:
         if not pd.isnull(x):
@@ -162,21 +190,22 @@ def req_handle(symbol,country,style):
             xlabel.append(x.strftime('%m/%y'))
 
     fig1, ax = gen_plt(symbol_yhoo, currency)
-    plt.fill_between(test, test2, color = "blue")
-    plt.xticks(test,xlabel[cut:])
-    plt.plot(test, test3, color="orange", marker="o")
-    plt.plot(test, test2, color="grey", linewidth=3, marker="^")
+    plt.fill_between(price, e_total, color = "blue")
+    plt.xticks(price,xlabel[cut:])
+    plt.plot(price, e_total_norm, color="orange", marker="o")
+    plt.plot(price, e_total, color="grey", linewidth=3, marker="^")
     plt.plot(df.index, df[column_name[6]], color="yellow", marker="o")
     plt.plot(df_daily.index, df_daily["Close"], color="white")
     plt.ylim(0,None)
-    plt.xlim(df.index[cut],test[-1]) #df3.index[len(df3.index)-1])
+    plt.xlim(df.index[cut],price[-1]) #df3.index[len(df3.index)-1])
     ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
     plt.savefig('graphs/plot_base.png')
     plt.clf()
     plt.cla()
+    return(current_pe,normal_multiple,grw, grw_fut)
     '''
     f1, ax = gen_plt(symbol_yhoo, currency)
-    plt.xticks(test,xlabel[cut:])
+    plt.xticks(price,xlabel[cut:])
     plt.plot(df_daily["blended_pe"])
     plt.show()
     '''
