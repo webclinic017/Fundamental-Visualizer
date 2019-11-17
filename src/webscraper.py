@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-#TODO: Classes and functions
+#TODO: Clean this mess (Classes and functions)
 #TODO: Labels
 #TODO: Fix pegc calc
 #TODO: Store data and request other graph, same symbol
 #TODO: b-shares handler
-#TODO: handler estimates-curreny != data-currency (MOWI)
+#TODO: Improve REIT functions
 from bs4 import BeautifulSoup
 import requests
 import numpy as np
@@ -18,7 +18,7 @@ import sys
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
-def req_handle(symbol,country,style):
+def req_handle(symbol,country,style,REIT,ratio):
     killer()
     df = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
     df["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
@@ -102,6 +102,7 @@ def req_handle(symbol,country,style):
         forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
     if ecurrency != None and ecurrency != currency:
+        print(currency,ecurrency)
         start2 = datetime.date.today() - datetime.timedelta(days=7)
         forex = yf.download(str(ecurrency) + str(currency) + "=X", start=start2, end=end)
         df3["Median EPS"] = df3["Median EPS"].apply(lambda x: x*forex["Close"].iloc[-1])
@@ -117,15 +118,6 @@ def req_handle(symbol,country,style):
     e_total = e_total[thecutter]
 
     cut = (len(price)-len(e_total))
-    currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
-    if ycurrency != None and ycurrency !=currency:
-        print(currency,ycurrency)
-        start2 = datetime.date.today() - datetime.timedelta(days=7)
-        forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
-    if country == "UK":
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
-    xlabel = []
 
     e_total_index = np.append(df.index.values.astype('datetime64[D]').astype(int),df3.index.values.astype('datetime64[D]').astype(int))
     e_total_index = e_total_index[thecutter]
@@ -145,7 +137,7 @@ def req_handle(symbol,country,style):
     if grw_status:
         num_years = len(e_total)-grw_start-1
         grw = (((e_total[-1]/e_total[i])**(1/num_years))-1)*100 #(start/end)^(1/periods)-1
-        grw_fut = (((e_total[-1]/e_total[-3])**(1/3))-1)*100 #TODO: improve grw_fut
+        grw_fut = (((e_total[-1]/e_total[-3])**(1/2))-1)*100 #TODO: improve grw_fut
     else:
         grw = 0
         grw_fut = 0
@@ -189,11 +181,10 @@ def req_handle(symbol,country,style):
     e_total_norm= e_total * normal_multiple
     df[column_name[5]] = df[column_name[5]].apply(lambda x: x*multiple)
     df3["Median EPS"] = df3["Median EPS"]*multiple
-    df[column_name[6]] = df[column_name[6]].apply(lambda x: x*multiple)
     e_total = np.append(pd.to_numeric(df[column_name[5]].values, errors='coerce'),pd.to_numeric(df3["Median EPS"].values, errors='coerce'))
     e_total = e_total[~np.isnan(e_total)]
     price = price[(len(price)-len(e_total)):]
-
+    xlabel = []
     for x in df.index:
         if not pd.isnull(x):
             xlabel.append(x.strftime('%m/%y'))
@@ -202,25 +193,40 @@ def req_handle(symbol,country,style):
             xlabel.append(x.strftime('%m/%y'))
 
     fig1, ax = gen_plt(symbol_yhoo, currency)
-    plt.fill_between(price, e_total, color = "blue")
-    plt.xticks(price,xlabel[cut:])
-    plt.plot(price, e_total_norm, color="orange", marker="o")
-    plt.plot(price, e_total, color="grey", linewidth=3, marker="^")
-    plt.plot(df.index, df[column_name[6]], color="yellow", marker="o")
-    plt.plot(df_daily.index, df_daily["Close"], color="white")
-    plt.ylim(0,None)
-    plt.xlim(df.index[cut],price[-1]) #df3.index[len(df3.index)-1])
-    ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
+    if REIT:
+        df[column_name[6]] = df[column_name[6]].apply(lambda x: x*15)
+        df[column_name[10]] = df[column_name[10]]/df[column_name[8]]
+        df[column_name[10]] = df[column_name[10]].apply(lambda x: x*15)
+        plt.fill_between(df.index, df[column_name[10]], color = "blue")
+        plt.plot(df_daily.index, df_daily["Close"], color="white")
+        plt.plot(df.index, df[column_name[10]], color="grey", linewidth=3, marker="^")
+        plt.plot(df.index, df[column_name[6]], color="yellow", marker="o")
+        reitvar = xlabel[cut:]
+        plt.xticks(price[:-1],reitvar[:-1])
+        plt.ylim(0,None)
+        plt.xlim(df.index[cut],price[-2])
+        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
+    elif ratio:
+        f1, ax = gen_plt(symbol_yhoo, currency)
+        plt.xticks(price,xlabel[cut:])
+        plt.ylim(0,100)
+        plt.plot(df_daily["blended_pe"],color="orange")
+    else:
+        df[column_name[6]] = df[column_name[6]].apply(lambda x: x*multiple)
+        plt.fill_between(price, e_total, color = "blue")
+        plt.xticks(price,xlabel[cut:])
+        plt.plot(price, e_total_norm, color="orange", marker="o")
+        plt.plot(price, e_total, color="grey", linewidth=3, marker="^")
+        plt.plot(df.index, df[column_name[6]], color="yellow", marker="o")
+        plt.plot(df_daily.index, df_daily["Close"], color="white")
+        plt.ylim(0,None)
+        plt.xlim(df.index[cut],price[-1]) #df3.index[len(df3.index)-1])
+        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
     plt.savefig('graphs/plot_base.png')
     plt.clf()
     plt.cla()
     return(current_pe,normal_multiple,grw, grw_fut)
-    '''
-    f1, ax = gen_plt(symbol_yhoo, currency)
-    plt.xticks(price,xlabel[cut:])
-    plt.plot(df_daily["blended_pe"])
-    plt.show()
-    '''
+
 
 def gen_plt(symbol_yhoo, currency):
     plt.style.use('dark_background')
