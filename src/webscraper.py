@@ -18,11 +18,20 @@ import sys
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
-def req_handle(symbol,country,style,REIT,ratio):
+def req_handle(symbol,country,style):
     killer()
+
+    REIT = False
+    peratio = False
+    if style == "REIT":
+        REIT = True
+    elif style == "PE":
+        peratio = True
+
     df = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
     df["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
     df["Yahoo"] = [".DE",".HK",".T",".PA",".TO",".L",".SW",".AX",".KS",".AS",".MC",".ME",".MI",".BR",".MX",".ST",".OL",".HE",".CO"]
+
     if country == "USA":
         symbol_morn = symbol
         symbol_yhoo = symbol_morn
@@ -101,7 +110,7 @@ def req_handle(symbol,country,style,REIT,ratio):
         start2 = datetime.date.today() - datetime.timedelta(days=7)
         forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
-    if ecurrency != None and ecurrency != currency:
+    if ecurrency != None and len(ecurrency)>2 and ecurrency != currency:
         print(currency,ecurrency)
         start2 = datetime.date.today() - datetime.timedelta(days=7)
         forex = yf.download(str(ecurrency) + str(currency) + "=X", start=start2, end=end)
@@ -194,6 +203,7 @@ def req_handle(symbol,country,style,REIT,ratio):
 
     fig1, ax = gen_plt(symbol_yhoo, currency)
     if REIT:
+        ax.set_ylabel("OCF")
         df[column_name[6]] = df[column_name[6]].apply(lambda x: x*15)
         df[column_name[10]] = df[column_name[10]]/df[column_name[8]]
         df[column_name[10]] = df[column_name[10]].apply(lambda x: x*15)
@@ -206,11 +216,18 @@ def req_handle(symbol,country,style,REIT,ratio):
         plt.ylim(0,None)
         plt.xlim(df.index[cut],price[-2])
         ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
-    elif ratio:
-        f1, ax = gen_plt(symbol_yhoo, currency)
-        plt.xticks(price,xlabel[cut:])
-        plt.ylim(0,100)
+    elif peratio:
         plt.plot(df_daily["blended_pe"],color="orange")
+        if df_daily["blended_pe"].max() > 100.0 and df_daily["blended_pe"].min() < 0.0:
+            plt.ylim(0,100)
+        elif df_daily["blended_pe"].min() < 0.0:
+            plt.ylim(0,None)
+        elif df_daily["blended_pe"].max() > 100.0:
+            plt.ylim(0,100)
+        ax.set_ylabel("PE")
+        reitvar = xlabel[cut:]
+        plt.xticks(price[:-1],reitvar[:-1])
+        plt.xlim(df.index[cut],price[-2])
     else:
         df[column_name[6]] = df[column_name[6]].apply(lambda x: x*multiple)
         plt.fill_between(price, e_total, color = "blue")

@@ -22,11 +22,9 @@ class Window(Frame):
         self.canvas1.create_line(195, 0, 195, 55, fill="white")
         self.canvas1.create_line(295, 0, 295, 55, fill="white")
         self.canvas1.create_line(403, 0, 403, 55, fill="white")
-        self.canvas1.create_line(600, 0, 600, 55, fill="white")
+        self.canvas1.create_line(640, 0, 640, 55, fill="white")
         self.canvas1.pack()
 
-        self.cvar = IntVar(root)
-        self.cvar2 = IntVar(root)
         self.var_style = StringVar(root)
         self.var_style.set("PEG")
         self.var_country = StringVar(root)
@@ -41,12 +39,11 @@ class Window(Frame):
         self.disp4 = Label(root, text = '15%',background='white')
         self.disp41 = Label(root, text = 'exp. Growth Rate',background='black',foreground='white')
         self.symbol = Entry(root, width = 10)
-        self.c = Checkbutton(root, text="REIT", variable=self.cvar,background='black',fg='white',selectcolor='black',foreground='white',activebackground='black',activeforeground='white')
-        self.c2 = Checkbutton(root, text="", variable=self.cvar2,background='black',fg='white',selectcolor='black',foreground='white',activebackground='black',activeforeground='white')
+
         self.sdisp = Label(root, text = 'Enter Symbol',background='black',foreground='white')
         self.btn1 = Button(text="Update", command=self.update, height=1, width=6, relief=GROOVE,background='black',foreground='white',activebackground='green',activeforeground='white') #TODO: mouseover
 
-        self.w1 = OptionMenu(root, self.var_style,"Base", "PEG", "PEG85") #TODO: Implement PEGC
+        self.w1 = OptionMenu(root, self.var_style,"Base", "PEG", "PEG85","PE","REIT") #TODO: Implement PEGC
         self.w2 = OptionMenu(root, self.var_country,"USA", "Germany", "Hongkong", "Japan", "France", "Canada", "UK", "Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark") #Austria, Poland
         self.w1.config(background='black',foreground='white',relief=FLAT,activebackground='green',activeforeground='white')
         self.w2.config(background='black',foreground='white',relief=FLAT,activebackground='green',activeforeground='white')
@@ -60,16 +57,14 @@ class Window(Frame):
         self.canvas1.create_window(350, 41, window=self.disp4)
         self.canvas1.create_window(350, 17, window=self.disp41)
 
-        self.canvas1.create_window(450, 29, window=self.w1)
-        self.canvas1.create_window(550, 29, window=self.w2)
-        self.canvas1.create_window(650, 41, window=self.symbol)
-        self.canvas1.create_window(650, 17, window=self.sdisp)
-        self.canvas1.create_window(750, 41, window=self.btn1)
-        self.canvas1.create_window(750, 17, window=self.c)
-        self.canvas1.create_window(708, 29, window=self.c2)
+        self.canvas1.create_window(470, 29, window=self.w1)
+        self.canvas1.create_window(570, 29, window=self.w2)
+        self.canvas1.create_window(690, 41, window=self.symbol)
+        self.canvas1.create_window(690, 17, window=self.sdisp)
+        self.canvas1.create_window(765, 29, window=self.btn1)
 
     def update(self):
-        x,y,z,w = req_handle(self.symbol.get().upper(), self.var_country.get(),self.var_style.get(),self.cvar.get(),self.cvar2.get())
+        x,y,z,w = req_handle(self.symbol.get().upper(), self.var_country.get(),self.var_style.get())
         self.disp1["text"] = str(round(x, 2))
         self.disp2["text"] = str(round(y, 2))
         self.disp3["text"] = str(round(z, 2)) + "%"
