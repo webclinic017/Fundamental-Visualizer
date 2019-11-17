@@ -1,14 +1,13 @@
 #!/usr/bin/env python
-#TODO: GUI
 #TODO: Classes and functions
-#TODO: Country Seletion for non-US Stocks
 #TODO: normal_multiple + blended PE
 #TODO: Labels
 #TODO: Improve growth rate calc
-#TODO: different currencies yahoo/morningstar (especially chinese)
+#TODO: handle different currencies yahoo/morningstar (especially chinese)
 #TODO: debug error with symbol MIC, DXC, PLYM, BLDP, MOR
 #TODO: Fix pegc calc
 #TODO: Store data and request other graph, same symbol
+#TODO: b-shares handler
 from bs4 import BeautifulSoup
 import requests
 import numpy as np
@@ -20,15 +19,19 @@ import pandas as pd
 import pandas_datareader.data as web
 import sys
 
-("USA", "Germany", "China", "Japan", "France","Canda","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark")
-
 def req_handle(symbol,country,style):
     killer()
+    df = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
+    df["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
+    df["Yahoo"] = [".DE",".HK",".T",".PA",".TO",".L",".SW",".AX",".KS",".AS",".MC",".ME",".MI",".BR",".MX",".ST",".OL",".HE",".CO"]
     if country == "USA":
         symbol_morn = symbol
         symbol_yhoo = symbol_morn
     else:
-
+        symbol_morn = df.loc[country]["Morningstar"] + symbol
+        symbol_yhoo = symbol + df.loc[country]["Yahoo"]
+        if country == "UK":
+            symbol_morn = symbol_morn + "."
 
     df_est = pd.read_html(r'http://financials.morningstar.com/valuate/annual-estimate-list.action?&t={}'.format(symbol_morn),keep_default_na=False)
     df_est = pd.concat(df_est)

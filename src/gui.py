@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 from webscraper import req_handle, killer
 from tkinter import messagebox
+import pandas as pd
 
 class Window(Frame):
     def __init__(self, master=None):
@@ -26,7 +27,7 @@ class Window(Frame):
         self.symbol = Entry(root)
         self.button1 = Button(text="Update", command=self.update)
         self.w1 = OptionMenu(root, self.var_style, "PEG", "PEG85") #TODO: Implement PEGC
-        self.w2 = OptionMenu(root, self.var_country, "Germany", "China", "Japan", "France","Canda","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark")
+        self.w2 = OptionMenu(root, self.var_country, "Germany", "Hongkong", "Japan", "France", "Canada", "UK", "Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark") #Austria, Poland
 
         self.canvas1.create_window(100, 24, window=self.symbol)
         self.canvas1.create_window(200, 24, window=self.button1)
