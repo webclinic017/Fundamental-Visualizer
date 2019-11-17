@@ -52,6 +52,7 @@ def req_handle(symbol,country,style):
     df_est = df_est[1:]
     df_est.rename(columns = header, inplace=True)
     df_est.set_index(est_time, inplace=True)
+    ecurrency = df_est.columns[3][:3]
 
     url1 = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
     #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
@@ -87,13 +88,24 @@ def req_handle(symbol,country,style):
     start = df.index[0]
     end = datetime.date.today()
     stock = yf.Ticker(symbol_yhoo)
-    print(symbol_yhoo)
     try:
         ycurrency = stock.info["currency"]
     except Exception as ex:
         ycurrency = None
         print(ex)
     df_daily = yf.download(symbol_yhoo,start,end)
+    currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
+    if ycurrency != None and ycurrency !=currency:
+        print(currency,ycurrency)
+        start2 = datetime.date.today() - datetime.timedelta(days=7)
+        forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
+    if ecurrency != None and ecurrency != currency:
+        start2 = datetime.date.today() - datetime.timedelta(days=7)
+        forex = yf.download(str(ecurrency) + str(currency) + "=X", start=start2, end=end)
+        df3["Median EPS"] = df3["Median EPS"].apply(lambda x: x*forex["Close"].iloc[-1])
+    if country == "UK":
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
 
     price = np.array(df.index.values) #,df3.index.values)
     for x in df3.index.values:
@@ -104,15 +116,6 @@ def req_handle(symbol,country,style):
     e_total = e_total[thecutter]
 
     cut = (len(price)-len(e_total))
-    currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
-    print(currency,ycurrency)
-    if ycurrency != None and ycurrency !=currency:
-        print(currency,ycurrency)
-        start2 = datetime.date.today() - datetime.timedelta(days=7)
-        forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
-    if country == "UK":
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
     xlabel = []
 
     e_total_index = np.append(df.index.values.astype('datetime64[D]').astype(int),df3.index.values.astype('datetime64[D]').astype(int))

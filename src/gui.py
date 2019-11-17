@@ -64,7 +64,6 @@ class Window(Frame):
 
     def update(self):
         x,y,z,w = req_handle(self.symbol.get().upper(), self.var_country.get(),self.var_style.get())
-        print(x,y,z)
         self.disp1["text"] = str(round(x, 2))
         self.disp2["text"] = str(round(y, 2))
         self.disp3["text"] = str(round(z, 2)) + "%"
