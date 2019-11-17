@@ -133,7 +133,9 @@ def req_handle(symbol,country,style):
 
     df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype('datetime64[D]').astype(int) , e_total_index, e_total)
     df_daily["blended_pe"] = df_daily["Close"]/df_daily["blended_earnings"]
-    normal_multiple = df_daily["blended_pe"].mean()
+
+    normal_multiple = df_daily["blended_pe"].agg(lambda x: x[x>0].median())
+    #normal_multiple_deprecated = df_daily["blended_pe"].mean()
     current_pe = df_daily["blended_pe"].iloc[-1]
     for i, item in enumerate(e_total):
         if item>0:
@@ -145,8 +147,11 @@ def req_handle(symbol,country,style):
 
     if grw_status:
         num_years = len(e_total)-grw_start-1
+        if num_years == 1:
+            grw_fut = (((e_total[-1]/e_total[-2])**(1/1))-1)*100 #TODO: improve grw_fut
+        else:
+            grw_fut = (((e_total[-1]/e_total[-3])**(1/2))-1)*100 #TODO: improve grw_fut
         grw = (((e_total[-1]/e_total[i])**(1/num_years))-1)*100 #(start/end)^(1/periods)-1
-        grw_fut = (((e_total[-1]/e_total[-3])**(1/2))-1)*100 #TODO: improve grw_fut
     else:
         grw = 0
         grw_fut = 0
