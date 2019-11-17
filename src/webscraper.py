@@ -4,6 +4,8 @@
 #TODO: Fix pegc calc
 #TODO: Store data and request other graph, same symbol
 #TODO: b-shares handler
+#TODO: improve column selection
+#TODO: BUGFIX DDD,KHC,PCG,PDD
 #TODO: Improve REIT functions
 from bs4 import BeautifulSoup
 import requests
@@ -106,12 +108,12 @@ def req_handle(symbol,country,style):
     df_daily = yf.download(symbol_yhoo,start,end)
     currency = str([col for col in df.columns if 'Earn' in col])[-5:-2]
     if ycurrency != None and ycurrency !=currency:
-        print(currency,ycurrency)
+        print("Price data conversion form " + ycurrency + " to " + currency + ".")
         start2 = datetime.date.today() - datetime.timedelta(days=7)
         forex = yf.download(str(ycurrency) + str(currency) + "=X", start=start2, end=end)
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
     if ecurrency != None and len(ecurrency)>2 and ecurrency != currency:
-        print(currency,ecurrency)
+        print("Estimate data conversion form " + ecurrency + " to " + currency + ".")
         start2 = datetime.date.today() - datetime.timedelta(days=7)
         forex = yf.download(str(ecurrency) + str(currency) + "=X", start=start2, end=end)
         df3["Median EPS"] = df3["Median EPS"].apply(lambda x: x*forex["Close"].iloc[-1])
@@ -148,6 +150,7 @@ def req_handle(symbol,country,style):
     if grw_status:
         num_years = len(e_total)-grw_start-1
         if num_years == 1:
+            print("Short Earnings Growth History.")
             grw_fut = (((e_total[-1]/e_total[-2])**(1/1))-1)*100 #TODO: improve grw_fut
         else:
             grw_fut = (((e_total[-1]/e_total[-3])**(1/2))-1)*100 #TODO: improve grw_fut
