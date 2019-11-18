@@ -35,6 +35,7 @@ def yahoo_data(symbol_yhoo,start,end):
     return df_daily,yahoo_currency
 
 def morningstar_data(symbol_morn):
+    #TODO: add handler for no returned data
     url1 = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
     #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
     soup1 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url1).text)[0])['componentData'], 'lxml')
@@ -85,7 +86,6 @@ def morningstar_data_est(symbol_morn):
     df_est_full = df_est_full[1:]
     df_est_full.rename(columns = header, inplace=True)
     df_est_full.set_index(est_time, inplace=True)
-    print(df_est_full)
     est_currency = df_est_full.columns[3][:3] #TODO: Improve ecurreny selection
     return df_est, est_currency
 
@@ -132,9 +132,7 @@ def gen_plt(symbol_yhoo, currency):
     ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.9)
     return fig1, ax
 
-def req_handle(symbol,country,style):
-    killer()
-
+def gen_symbol(symbol,country):
     df_exchange = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
     df_exchange["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
     df_exchange["Yahoo"] = [".DE",".HK",".T",".PA",".TO",".L",".SW",".AX",".KS",".AS",".MC",".ME",".MI",".BR",".MX",".ST",".OL",".HE",".CO"]
@@ -149,32 +147,38 @@ def req_handle(symbol,country,style):
             symbol_morn = symbol_morn + "."
         if country == "Hongkong" and len(symbol_yhoo)<7:
             symbol_yhoo = (7-len(symbol_yhoo))*"0" + symbol_yhoo
+    return symbol_morn, symbol_yhoo
 
+def currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency,end,country):
+    start = end - datetime.timedelta(days=7)
+    if yahoo_currency != None and yahoo_currency !=currency:
+        print("Price data conversion form " + yahoo_currency + " to " + currency + ".")
+        forex = yf.download(str(yahoo_currency) + str(currency) + "=X", start=start, end=end)
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
+    if est_currency != None and len(est_currency)>2 and est_currency != currency:
+        print("Estimate data conversion form " + est_currency + " to " + currency + ".")
+        start = datetime.date.today() - datetime.timedelta(days=7)
+        forex = yf.download(str(est_currency) + str(currency) + "=X", start=start, end=end)
+        df_est["Median EPS"] = df_est["Median EPS"].apply(lambda x: x*forex["Close"].iloc[-1])
+    if country == "UK":
+        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
+
+def req_handle(symbol,country,style):
+    killer()
+    symbol_morn, symbol_yhoo = gen_symbol(symbol,country)
     df_yearly = morningstar_data(symbol_morn)
     df_est, est_currency = morningstar_data_est(symbol_morn)
-
     start = df_yearly.index[0]
     end = datetime.date.today()
-
     df_daily, yahoo_currency = yahoo_data(symbol_yhoo,start,end)
+
+    earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
+    currency = str(earnings_col)[-5:-2]
+    currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency,end,country)
 
     column_name=[]
     for col in df_yearly.columns:
         column_name.append(col)
-
-    currency = str([col for col in df_yearly.columns if 'Earn' in col])[-5:-2]
-    if yahoo_currency != None and yahoo_currency !=currency:
-        print("Price data conversion form " + yahoo_currency + " to " + currency + ".")
-        start2 = datetime.date.today() - datetime.timedelta(days=7)
-        forex = yf.download(str(yahoo_currency) + str(currency) + "=X", start=start2, end=end)
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*forex["Close"].iloc[-1])
-    if est_currency != None and len(est_currency)>2 and est_currency != currency:
-        print("Estimate data conversion form " + est_currency + " to " + currency + ".")
-        start2 = datetime.date.today() - datetime.timedelta(days=7)
-        forex = yf.download(str(est_currency) + str(currency) + "=X", start=start2, end=end)
-        df_est["Median EPS"] = df_est["Median EPS"].apply(lambda x: x*forex["Close"].iloc[-1])
-    if country == "UK":
-        df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
 
     price = np.array(df_yearly.index.values)
     for x in df_est.index.values:
