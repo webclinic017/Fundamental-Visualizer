@@ -26,7 +26,7 @@ class Window(Frame):
         self.canvas1.pack()
 
         self.var_style = StringVar(root)
-        self.var_style.set("PEG")
+        self.var_style.set("Base")
         self.var_country = StringVar(root)
         self.var_country.set("USA")
 
@@ -43,7 +43,7 @@ class Window(Frame):
         self.sdisp = Label(root, text = 'Enter Symbol',background='black',foreground='white')
         self.btn1 = Button(text="Update", command=self.update, height=1, width=6, relief=GROOVE,background='black',foreground='white',activebackground='green',activeforeground='white') #TODO: mouseover
 
-        self.w1 = OptionMenu(root, self.var_style,"Base", "PEG", "PEG85","PE","REIT") #TODO: Implement PEGC
+        self.w1 = OptionMenu(root, self.var_style,"Base", "PE15", "PEG85","PE-Plot","REIT") #TODO: Implement PEGC
         self.w2 = OptionMenu(root, self.var_country,"USA", "Germany", "Hongkong", "Japan", "France", "Canada", "UK", "Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark") #Austria, Poland
         self.w1.config(background='black',foreground='white',relief=FLAT,activebackground='green',activeforeground='white')
         self.w2.config(background='black',foreground='white',relief=FLAT,activebackground='green',activeforeground='white')
