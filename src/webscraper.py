@@ -13,16 +13,9 @@ import requests
 import numpy as np
 import re
 import json
-import matplotlib.pyplot as plt
 import datetime
 import pandas as pd
 import yfinance as yf
-import sys
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
-
-def killer():
-    plt.close("all")
 
 def yahoo_data(symbol_yhoo,start,end):
     stock = yf.Ticker(symbol_yhoo)
@@ -116,22 +109,6 @@ def pegc():
                 print("Growth Rate: " + str(multiple) + "%")
     '''
 
-def gen_plt(symbol_yhoo, currency):
-    plt.style.use('dark_background')
-    fig1, ax = plt.subplots(figsize = (8,5))
-    ax.set_title(symbol_yhoo)
-    ax.set_ylabel(currency)
-    #ax.spines["top"].set_visible(False)
-    #ax.spines["right"].set_visible(False)
-    #ax.spines["bottom"].set_visible(False)
-    #ax.spines["left"].set_visible(False)
-    #ax.get_xaxis().tick_bottom()
-    #ax.get_yaxis().tick_left()
-    #ax.set_axisbelow(True)
-    #ax.yaxis.grid(color='gray', linewidth=0.25)
-    ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.9)
-    return fig1, ax
-
 def gen_symbol(symbol,country):
     df_exchange = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
     df_exchange["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
@@ -163,8 +140,7 @@ def currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency
     if country == "UK":
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
 
-def req_handle(symbol,country,style):
-    killer()
+def req_handle(country,symbol,style):
     symbol_morn, symbol_yhoo = gen_symbol(symbol,country)
     df_yearly = morningstar_data(symbol_morn)
     df_est, est_currency = morningstar_data_est(symbol_morn)
@@ -173,119 +149,7 @@ def req_handle(symbol,country,style):
     df_daily, yahoo_currency = yahoo_data(symbol_yhoo,start,end)
 
     earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
-    currency = str(earnings_col)[-5:-2]
-    currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency,end,country)
+    morn_currency = str(earnings_col)[-5:-2]
+    currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,morn_currency,end,country)
 
-    column_name=[]
-    for col in df_yearly.columns:
-        column_name.append(col)
-
-    price = np.array(df_yearly.index.values)
-    for x in df_est.index.values:
-        if not pd.isnull(x):
-            price = np.append(price, x)
-    e_total = np.append(pd.to_numeric(df_yearly[column_name[5]].values, errors='coerce'),pd.to_numeric(df_est["Median EPS"].values, errors='coerce'))#TODO:remove duplicate
-    thecutter = ~np.isnan(e_total)
-    e_total = e_total[thecutter]
-
-    cut = (len(price)-len(e_total))
-
-    e_total_index = np.append(df_yearly.index.values.astype('datetime64[D]').astype(int),df_est.index.values.astype('datetime64[D]').astype(int))
-    e_total_index = e_total_index[thecutter]
-
-    df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype('datetime64[D]').astype(int) , e_total_index, e_total)
-    df_daily["blended_pe"] = df_daily["Close"]/df_daily["blended_earnings"]
-
-    normal_multiple = df_daily["blended_pe"].agg(lambda x: x[x>0].median())
-    #normal_multiple_deprecated = df_daily["blended_pe"].mean()
-    current_pe = df_daily["blended_pe"].iloc[-1]
-    for i, item in enumerate(e_total):
-        if item>0:
-            grw_start = i
-            grw_status = True
-            break
-    if e_total[-1]<0:
-        grw_status = False
-
-    if grw_status:
-        num_years = len(e_total)-grw_start-1
-        if num_years == 1:
-            print("Short Earnings Growth History.")
-            grw_fut = (((e_total[-1]/e_total[-2])**(1/1))-1)*100 #TODO: improve grw_fut
-        else:
-            grw_fut = (((e_total[-1]/e_total[-3])**(1/2))-1)*100 #TODO: improve grw_fut
-        grw = (((e_total[-1]/e_total[i])**(1/num_years))-1)*100 #(start/end)^(1/periods)-1
-    else:
-        grw = 0
-        grw_fut = 0
-    multiple = grw_fut
-
-    if style == "PE15":
-        multiple = 15.0
-    elif style == "Base":
-        if multiple < 15.0:
-            multiple = 15.0
-    elif style == "PEG85":
-        if multiple <0:
-            multiple = 8.5
-        else:
-            multiple = multiple + 8.5
-
-    e_total_norm= e_total * normal_multiple
-    df_yearly[column_name[5]] = df_yearly[column_name[5]].apply(lambda x: x*multiple)
-    df_est["Median EPS"] = df_est["Median EPS"]*multiple
-    e_total = np.append(pd.to_numeric(df_yearly[column_name[5]].values, errors='coerce'),pd.to_numeric(df_est["Median EPS"].values, errors='coerce'))
-    e_total = e_total[~np.isnan(e_total)]
-    price = price[(len(price)-len(e_total)):]
-    xlabel = []
-    for x in df_yearly.index:
-        if not pd.isnull(x):
-            xlabel.append(x.strftime('%m/%y'))
-    for x in df_est.index:
-        if not pd.isnull(x):
-            xlabel.append(x.strftime('%m/%y'))
-
-    fig1, ax = gen_plt(symbol_yhoo, currency)
-
-    if style == "REIT":
-        ax.set_ylabel("OCF")
-        df_yearly[column_name[6]] = df_yearly[column_name[6]].apply(lambda x: x*15)
-        df_yearly[column_name[10]] = df_yearly[column_name[10]]/df_yearly[column_name[8]]
-        df_yearly[column_name[10]] = df_yearly[column_name[10]].apply(lambda x: x*15)
-        plt.fill_between(df_yearly.index, df_yearly[column_name[10]], color = "blue")
-        plt.plot(df_daily.index, df_daily["Close"], color="white")
-        plt.plot(df_yearly.index, df_yearly[column_name[10]], color="grey", linewidth=3, marker="^")
-        plt.plot(df_yearly.index, df_yearly[column_name[6]], color="yellow", marker="o")
-        cutvar = xlabel[cut:]
-        plt.xticks(price[:-1],cutvar[:-1])
-        plt.ylim(0,None)
-        plt.xlim(df_yearly.index[cut],price[-2])
-        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
-    elif style == "PE-Plot":
-        plt.plot(df_daily["blended_pe"],color="orange")
-        if df_daily["blended_pe"].max() > 100.0 and df_daily["blended_pe"].min() < 0.0:
-            plt.ylim(0,100)
-        elif df_daily["blended_pe"].min() < 0.0:
-            plt.ylim(0,None)
-        elif df_daily["blended_pe"].max() > 100.0:
-            plt.ylim(0,100)
-        ax.set_ylabel("PE")
-        cutvar = xlabel[cut:]
-        plt.xticks(price[:-1],cutvar[:-1])
-        plt.xlim(df_yearly.index[cut],price[-2])
-    else:
-        df_yearly[column_name[6]] = df_yearly[column_name[6]].apply(lambda x: x*multiple)
-        plt.fill_between(price, e_total, color = "blue")
-        plt.xticks(price,xlabel[cut:])
-        plt.plot(price, e_total_norm, color="orange", marker="o")
-        plt.plot(price, e_total, color="grey", linewidth=3, marker="^")
-        plt.plot(df_yearly.index, df_yearly[column_name[6]], color="yellow", marker="o")
-        plt.plot(df_daily.index, df_daily["Close"], color="white")
-        plt.ylim(0,None)
-        plt.xlim(df_yearly.index[cut],price[-1]) #df_est.index[len(df_est.index)-1])
-        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
-
-    plt.savefig('graphs/plot_base.png')
-    plt.clf()
-    plt.cla()
-    return(current_pe,normal_multiple,grw, grw_fut)
+    return(df_daily,df_yearly,df_est,morn_currency)
