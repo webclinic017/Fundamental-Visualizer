@@ -23,7 +23,7 @@ def yahoo_data(symbol_yhoo,start,end):
         yahoo_currency = stock.info["currency"]
     except Exception as ex:
         yahoo_currency = None
-        print(ex)
+        print("Yahoo Error:", ex)
     df_daily = yf.download(symbol_yhoo,start,end)
     return df_daily,yahoo_currency
 
@@ -83,6 +83,7 @@ def morningstar_data_est(symbol_morn):
     return df_est, est_currency
 
 def pegc():
+    #TODO: implement this
     '''
     elif style == "PEGC":
         i = 0

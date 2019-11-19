@@ -68,11 +68,12 @@ class Window(Frame):
     def update(self):
         data_request = [self.var_country.get(),self.symbol.get().upper(),self.var_style.get()]
         print("Request: ",data_request)
-        print("Previous request: ",self.previous_request)
+        #print("Previous request: ",self.previous_request)
         if data_request[:2] != self.previous_request[:2] or self.previous_request == []:
             print("Requesting data...")
             self.df_daily,self.df_yearly,self.df_est,self.currency = req_handle(*data_request)
             self.previous_request = data_request
+            print("Data received.")
 
         print("Processing data...")
         processing_request = [self.df_daily,self.df_yearly,self.df_est,*data_request[1:],self.currency]
@@ -82,6 +83,7 @@ class Window(Frame):
         self.disp_grw["text"] = str(round(grw, 2)) + "%"
         self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + "%"
         self.plot()
+        print("Data processed.")
 
     def plot(self):
         load = Image.open("plot.png")
