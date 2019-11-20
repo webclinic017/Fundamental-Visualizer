@@ -187,6 +187,6 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     e_total_index_dt = e_total_index_dt[(len(e_total_index_dt)-len(e_total)):]
 
     #TODO: gen_plt better not as function?
-    gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    #gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
 
-    return(current_pe, normal_multiple, grw, grw_exp)
+    return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
