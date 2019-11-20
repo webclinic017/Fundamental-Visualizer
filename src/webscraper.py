@@ -23,6 +23,7 @@ def yahoo_data(symbol_yhoo,start,end):
         yahoo_currency = stock.info["currency"]
     except Exception as ex:
         yahoo_currency = None
+        print("Currency Conversion failed.")
         print("Yahoo Error:", ex)
     df_daily = yf.download(symbol_yhoo,start,end)
     return df_daily,yahoo_currency
@@ -55,7 +56,9 @@ def morningstar_data(symbol_morn):
     df_yearly.columns = df_yearly.columns.str.strip()
     df_yearly.set_index('Year', inplace=True)
     df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
-    return df_yearly
+    earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
+    morn_currency = str(earnings_col)[-5:-2]
+    return df_yearly, morn_currency
 
 def morningstar_data_est(symbol_morn):
     df_est_full = pd.read_html(r'http://financials.morningstar.com/valuate/annual-estimate-list.action?&t={}'.format(symbol_morn),keep_default_na=False)
@@ -79,7 +82,7 @@ def morningstar_data_est(symbol_morn):
     df_est_full = df_est_full[1:]
     df_est_full.rename(columns = header, inplace=True)
     df_est_full.set_index(est_time, inplace=True)
-    est_currency = df_est_full.columns[3][:3] #TODO: Improve ecurreny selection
+    est_currency = df_est_full.columns[3][:3] #TODO: Improve est_curreny selection
     return df_est, est_currency
 
 def pegc():
@@ -143,14 +146,13 @@ def currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency
 
 def req_handle(country,symbol,style):
     symbol_morn, symbol_yhoo = gen_symbol(symbol,country)
-    df_yearly = morningstar_data(symbol_morn)
+    df_yearly, morn_currency = morningstar_data(symbol_morn)
     df_est, est_currency = morningstar_data_est(symbol_morn)
+
     start = df_yearly.index[0]
     end = datetime.date.today()
     df_daily, yahoo_currency = yahoo_data(symbol_yhoo,start,end)
 
-    earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
-    morn_currency = str(earnings_col)[-5:-2]
     currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,morn_currency,end,country)
 
     return(df_daily,df_yearly,df_est,morn_currency)
