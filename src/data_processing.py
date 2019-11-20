@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 import pandas as pd
 import numpy as np
+import plotly.graph_objs as go
 
 register_matplotlib_converters()
 
@@ -101,59 +102,71 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]/df_yearly[col_dict["shrs"]]
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*15)
-
-        plt.plot(df_daily.index, df_daily["Close"], color="white")
-        plt.plot(df_yearly.index, df_yearly[col_dict["ofc"]], color="grey", linewidth=3, marker="^")
-        plt.plot(df_yearly.index, df_yearly[col_dict["div"]], color="yellow", marker="o")
-
-        ax.set_ylabel("OCF")
-        plt.fill_between(df_yearly.index, df_yearly[col_dict["ofc"]], color = "blue")
-        cutvar = xlabel[cut:]
-        plt.xticks(e_total_index_dt[:-1],cutvar[:-1]) #TODO: Ticks for stock with no forecast (CO)
-        plt.ylim(0,None)
-        plt.xlim(df_yearly.index[cut],e_total_index_dt[-2])
-        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
+        trace1 = go.Figure()
+        trace1.add_trace(go.Scatter(
+                        x=df_yearly.index,
+                        y=df_yearly[col_dict["ofc"]],
+                        name="OCF/FFO",
+                        line_color='green',
+                        fill='tozeroy'))
+        trace1.add_trace(go.Scatter(
+                        x=df_daily.index,
+                        y=df_daily["Close"],
+                        name="Price",
+                        line_color='black',
+                        opacity=0.8))
+        trace1.add_trace(go.Scatter(
+                        x=df_yearly.index,
+                        y=df_yearly[col_dict["div"]],
+                        name="Dividend",
+                        line_color='yellow',
+                        opacity=0.8))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
 
     elif style == "PE-Plot":
-        plt.plot(df_daily["blended_pe"],color="orange")
-
-        if df_daily["blended_pe"].max() > 100.0 and df_daily["blended_pe"].min() < 0.0:
-            plt.ylim(0,100)
-        elif df_daily["blended_pe"].min() < 0.0:
-            plt.ylim(0,None)
-        elif df_daily["blended_pe"].max() > 100.0:
-            plt.ylim(0,100)
-
-        ax.set_ylabel("PE")
-        cutvar = xlabel[cut:]
-        plt.xticks(e_total_index_dt[:-1],cutvar[:-1])
-        plt.xlim(df_yearly.index[cut],df_daily.index[-1])
+        print("hello there")
+        trace1 = go.Figure()
+        trace1.add_trace(go.Scatter(
+                        x=df_daily.index,
+                        y=df_daily["blended_pe"],
+                        name="PE",
+                        line_color='green'))
     else:
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*e_multiple)
-
-        plt.plot(e_total_index_dt, e_total_norm, color="orange", marker="o")
-        plt.plot(e_total_index_dt, e_total, color="grey", linewidth=3, marker="^")
-        plt.plot(df_yearly.index, df_yearly[col_dict["div"]], color="yellow", marker="o")
-        plt.plot(df_daily.index, df_daily["Close"], color="white")
-
-        plt.fill_between(e_total_index_dt, e_total, color = "blue")
-        plt.xticks(e_total_index_dt,xlabel[cut:])
-        plt.ylim(0,None)
-        plt.xlim(df_yearly.index[cut],e_total_index_dt[-1]) #df_est.index[len(df_est.index)-1])
-        ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.95)
+        trace1 = go.Figure()
+        trace1.add_trace(go.Scatter(
+                        x=pd.to_datetime(e_total_index_dt),
+                        y=e_total,
+                        name="EPS",
+                        line_color='green',
+                        fill='tozeroy'))
+        trace1.add_trace(go.Scatter(
+                        x=df_daily.index,
+                        y=df_daily["Close"],
+                        name="Price",
+                        line_color='black',
+                        opacity=0.8))
+        trace1.add_trace(go.Scatter(
+                        x=pd.to_datetime(e_total_index_dt),
+                        y=e_total_norm,
+                        name="Normal PE",
+                        line_color='blue',
+                        opacity=0.8))
+        trace1.add_trace(go.Scatter(
+                        x=df_yearly.index,
+                        y=df_yearly[col_dict["div"]],
+                        name="Dividend",
+                        line_color='yellow',
+                        opacity=0.8))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
-    plt.savefig('plot.png')
-    plt.clf()
-    plt.cla()
+    return trace1
 
 def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
-    killer()
     earnings_col = df_yearly.filter(like='Earn').columns[0]
     ocf_col = df_yearly.filter(like='Operating Cash').columns[0]
     dividend_col = df_yearly.filter(like='Divid').columns[0]
@@ -187,6 +200,6 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     e_total_index_dt = e_total_index_dt[(len(e_total_index_dt)-len(e_total)):]
 
     #TODO: gen_plt better not as function?
-    #gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
-
-    return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    trace1 = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    return trace1
+    #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
