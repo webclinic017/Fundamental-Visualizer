@@ -98,11 +98,15 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     fig, ax = base_plt(symbol, currency)
     xlabel = gen_xlabel(df_yearly,df_est)
     trace1 = go.Figure()
+    ranger={"x":[],"y":[]}
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]/df_yearly[col_dict["shrs"]]
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*15)
-
+        ranger["x"].append(df_yearly.index.min())
+        ranger["x"].append(df_yearly.index.max())
+        ranger["y"].append(df_yearly[col_dict["ofc"]].min())
+        ranger["y"].append(df_yearly[col_dict["ofc"]].max())
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
                         y=df_yearly[col_dict["ofc"]],
@@ -113,7 +117,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=df_daily.index,
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='black',
+                        line_color='white',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
@@ -126,12 +130,20 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
 
     elif style == "PE-Plot":
+        ranger["x"].append(df_yearly.index.min())
+        ranger["x"].append(df_yearly.index.max())
+        ranger["y"].appen(df_yearly[col_dict["blended_pe"]].min())
+        ranger["y"].append(df_yearly[col_dict["blended_pe"]].max())
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["blended_pe"],
                         name="PE",
                         line_color='orange'))
     else:
+        ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
+        ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
+        ranger["y"].append((e_total.min()))
+        ranger["y"].append((e_total.max()))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*e_multiple)
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
@@ -140,10 +152,10 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         line_color='blue',
                         fill='tozeroy'))
         trace1.add_trace(go.Scatter(
-                        x=df_daily.index,
+                        x=(df_daily.index),
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='black',
+                        line_color='white',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
@@ -152,7 +164,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         line_color='orange',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
-                        x=df_yearly.index,
+                        x=pd.to_datetime(df_yearly.index),
                         y=df_yearly[col_dict["div"]],
                         name="Dividend",
                         line_color='yellow',
@@ -161,9 +173,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
-    #trace1.layout.template = 'plotly_dark'
-    #trace1.layout.autocolorscale = False
-    return trace1
+    trace1.layout.template = 'plotly_dark'
+    return trace1,ranger
 
 def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     earnings_col = df_yearly.filter(like='Earn').columns[0]
@@ -199,6 +210,6 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     e_total_index_dt = e_total_index_dt[(len(e_total_index_dt)-len(e_total)):]
 
     #TODO: gen_plt better not as function?
-    trace1 = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
-    return trace1
+    trace1,range = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    return trace1,range
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
