@@ -79,7 +79,7 @@ app.layout = html.Div([
             {'label': u'PE-Plot', 'value': 'PE-Plot'},
             {'label': u'REIT', 'value': 'REIT'},
         ],
-        value='Base'
+        value='PE-Plot'
     ),
 
     html.Label('Ticker: '),
@@ -110,21 +110,22 @@ app.layout = html.Div([
 
 def update_graph_output(n_clicks,symbol,country,style):
     trace1,ranger = str.update(country,symbol,style)
-    print(ranger)
-    try:
-        print(ranger["x"])
-        print(ranger["y"])
-    except Exception as ex:
-        print(ex)
-    #trace1.show()
-    return {"data": trace1}
+
+    trace1.show()
+    return {"data": trace1,"layout": go.Layout(title="Wage Rigidity",plot_bgcolor= colors['background'], paper_bgcolor= colors['background'],
+                    yaxis={"title": "% of Jobstayers With a Wage Change of Zero", "range": [0, 300],
+                            "tick0": 0, "dtick": 50},
+                    xaxis={"title": "Year", "range": [pd.to_datetime(ranger["x"][0]),pd.to_datetime(ranger["x"][1])]})
+
+    }
 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
 '''
     "layout": go.Layout(title="Wage Rigidity",plot_bgcolor= colors['background'], paper_bgcolor= colors['background'])}
-{"data": [trace1], "layout": go.Layout(title="Wage Rigidity",plot_bgcolor= colors['background'], paper_bgcolor= colors['background'],
+{"data": [trace1],
+"layout": go.Layout(title="Wage Rigidity",plot_bgcolor= colors['background'], paper_bgcolor= colors['background'],
                 yaxis={"title": "% of Jobstayers With a Wage Change of Zero", "range": [0, 300],
                         "tick0": 0, "dtick": 50},
                 xaxis={"title": "Year",

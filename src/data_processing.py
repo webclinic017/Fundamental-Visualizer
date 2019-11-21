@@ -130,10 +130,10 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
 
     elif style == "PE-Plot":
-        ranger["x"].append(df_yearly.index.min())
-        ranger["x"].append(df_yearly.index.max())
-        ranger["y"].appen(df_yearly[col_dict["blended_pe"]].min())
-        ranger["y"].append(df_yearly[col_dict["blended_pe"]].max())
+        ranger["x"].append(df_daily.index.min())
+        ranger["x"].append(df_daily.index.max())
+        ranger["y"].append(df_daily["blended_pe"].min())
+        ranger["y"].append(df_daily["blended_pe"].max())
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["blended_pe"],
