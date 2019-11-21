@@ -97,17 +97,17 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     cut = (len(e_total_index_dt)-len(e_total))
     fig, ax = base_plt(symbol, currency)
     xlabel = gen_xlabel(df_yearly,df_est)
-
+    trace1 = go.Figure()
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]/df_yearly[col_dict["shrs"]]
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*15)
-        trace1 = go.Figure()
+
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
                         y=df_yearly[col_dict["ofc"]],
                         name="OCF/FFO",
-                        line_color='green',
+                        line_color='blue',
                         fill='tozeroy'))
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
@@ -126,21 +126,18 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
 
     elif style == "PE-Plot":
-        print("hello there")
-        trace1 = go.Figure()
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["blended_pe"],
                         name="PE",
-                        line_color='green'))
+                        line_color='orange'))
     else:
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*e_multiple)
-        trace1 = go.Figure()
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
                         name="EPS",
-                        line_color='green',
+                        line_color='blue',
                         fill='tozeroy'))
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
@@ -152,7 +149,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total_norm,
                         name="Normal PE",
-                        line_color='blue',
+                        line_color='orange',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
@@ -164,6 +161,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
+    #trace1.layout.template = 'plotly_dark'
+    #trace1.layout.autocolorscale = False
     return trace1
 
 def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
