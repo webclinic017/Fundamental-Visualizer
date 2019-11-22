@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 #TODO: function for reverting dataframes after multiplication with e_multiple
-import matplotlib.pyplot as plt
-from pandas.plotting import register_matplotlib_converters
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
-
-register_matplotlib_converters()
-
-def killer():
-    plt.close("all")
 
 def pe_calc(df_daily, e_total_index_dt, e_total, grw_exp, style):
     df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype('datetime64[D]').astype(int) , e_total_index_dt, e_total)

@@ -4,7 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, Event
 from webscraper import req_handle
-from data_processing import data_processing, killer
+from data_processing import data_processing
 import plotly.graph_objs as go
 import pandas as pd
 import datetime
@@ -84,18 +84,7 @@ app.layout = html.Div([
     html.Label('Ticker: '),
     dcc.Input(id='ticker-input', value='AAPL', type='text'),
     html.Button(id='update-input', type='Update', children='Update'),
-    html.Div(dcc.Graph(id='graph-output',
-        figure={
-            'data': [
-            ],
-            'layout': {
-                'plot_bgcolor': colors['background'],
-                'paper_bgcolor': colors['background'],
-                'font': {
-                    'color': colors['text']
-                }
-            }
-        }))
+    html.Div(dcc.Graph(id='graph-output'))
 
 ])
 
@@ -109,14 +98,7 @@ app.layout = html.Div([
 
 def update_graph_output(n_clicks,symbol,country,style):
     trace1,ranger = str.update(country,symbol,style)
-
-    trace1.show()
-    return {"data": trace1,"layout": go.Layout(title="Wage Rigidity",plot_bgcolor= colors['background'], paper_bgcolor= colors['background'],
-                    yaxis={"title": "% of Jobstayers With a Wage Change of Zero", "range": [0, 300],
-                            "tick0": 0, "dtick": 50},
-                    xaxis={"title": "Year", "range": [pd.to_datetime(ranger["x"][0]),pd.to_datetime(ranger["x"][1])]})
-
-    }
+    return {"data": trace1}
 
 
 if __name__ == '__main__':
