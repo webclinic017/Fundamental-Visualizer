@@ -6,7 +6,6 @@ from dash.dependencies import Input, Output, State, Event
 from webscraper import req_handle
 from data_processing import data_processing, killer
 import plotly.graph_objs as go
-import plotly.express as px
 import pandas as pd
 import datetime
 
