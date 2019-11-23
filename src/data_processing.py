@@ -87,13 +87,14 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=df_yearly.index,
                         y=df_yearly[col_dict["ofc"]],
                         name="OCF/FFO",
-                        line_color='green',
-                        fill='tozeroy'))
+                        line_color='grey',
+                        fill='tozeroy',
+                        fillcolor='blue'))
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='black',
+                        line_color='white',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
@@ -101,6 +102,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         name="Dividend",
                         line_color='yellow',
                         opacity=0.8))
+        trace1.layout.xaxis.range = [ranger["x"][0],ranger["x"][1]]
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
@@ -113,8 +115,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["blended_pe"],
-                        name="PE",
-                        line_color='orange'))
+                        line_color='orange',
+                        name="PE"))
     else:
         ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
         ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
@@ -125,13 +127,14 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
                         name="EPS",
-                        line_color='green',
-                        fill='tozeroy'))
+                        line_color='grey',
+                        fill='tozeroy',
+                        fillcolor='blue'))
         trace1.add_trace(go.Scatter(
                         x=(df_daily.index),
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='black',
+                        line_color='white',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
@@ -146,6 +149,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         line_color='yellow',
                         opacity=0.8))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
+        trace1.layout.xaxis.range = [ranger["x"][0],ranger["x"][1]]
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
@@ -185,7 +189,13 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     e_total = e_total[~np.isnan(e_total)] #TODO: check for redundancy
     e_total_index_dt = e_total_index_dt[(len(e_total_index_dt)-len(e_total)):]
 
+            #self.disp_pe["text"] = str(round(pe, 2))
+        #self.disp_pe_norm["text"] = str(round(pe_norm, 2))
+        #self.disp_grw["text"] = str(round(grw, 2)) + "%"
+        #self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + "%"
+
     #TODO: gen_plt better not as function?
     trace1,range = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
-    return trace1,range
+
+    return trace1, str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2))+ "%"), (str(round(grw_exp, 2))+ "%")
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
