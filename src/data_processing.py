@@ -90,7 +90,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         name="OCF/FFO",
                         line_color='grey',
                         fill='tozeroy',
-                        fillcolor='blue'))
+                        fillcolor='rgb(55,91,187)'))
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["Close"],
@@ -130,7 +130,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         name="EPS",
                         line_color='grey',
                         fill='tozeroy',
-                        fillcolor='blue'))
+                        fillcolor='rgb(55,91,187)))
         trace1.add_trace(go.Scatter(
                         x=(df_daily.index),
                         y=df_daily["Close"],
