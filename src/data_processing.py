@@ -74,7 +74,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     cut = (len(e_total_index_dt)-len(e_total))
     xlabel = gen_xlabel(df_yearly,df_est)
     trace1 = go.Figure()
-    trace1.layout.title= symbol
+    trace1.layout.title= symbol.upper()
     ranger={"x":[],"y":[]}
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
@@ -88,22 +88,31 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=df_yearly.index,
                         y=df_yearly[col_dict["ofc"]],
                         name="OCF/FFO",
-                        line_color='grey',
+                        marker=dict(
+                            color='white',
+                            size=9,
+                            line=dict(
+                                color='grey',
+                                width=2
+                            )),
+                        line=dict(color='grey', width=4),
                         fill='tozeroy',
                         fillcolor='rgb(55,91,187)'))
-        trace1.add_trace(go.Scatter(
-                        x=df_daily.index,
-                        y=df_daily["Close"],
-                        name="Price",
-                        line_color='white',
-                        opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
                         y=df_yearly[col_dict["div"]],
                         name="Dividend",
-                        line_color='yellow',
+                        marker=dict(
+                            color='yellow',
+                            size=8),
+                        line=dict(color='yellow', width=3),
                         opacity=0.8))
-        trace1.layout.xaxis.range = [ranger["x"][0],ranger["x"][1]]
+        trace1.add_trace(go.Scatter(
+                        x=df_daily.index,
+                        y=df_daily["Close"],
+                        name="Price",
+                        line_color='white'))
+        trace1.layout.xaxis.range = [ranger["x"][0],df_daily.index.max()]
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*(1/15))
         df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
@@ -128,27 +137,40 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
                         name="EPS",
-                        line_color='grey',
+                        marker=dict(
+                            color='white',
+                            size=9,
+                            line=dict(
+                                color='grey',
+                                width=2
+                            )),
+                        line=dict(color='grey', width=4),
                         fill='tozeroy',
-                        fillcolor='rgb(55,91,187)))
-        trace1.add_trace(go.Scatter(
-                        x=(df_daily.index),
-                        y=df_daily["Close"],
-                        name="Price",
-                        line_color='white',
-                        opacity=0.8))
+                        fillcolor='rgb(55,91,187)'))
+
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total_norm,
                         name="Normal PE",
-                        line_color='orange',
+                        marker=dict(
+                            color='orange',
+                            size=8),
+                        line=dict(color='orange', width=3),
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(df_yearly.index),
                         y=df_yearly[col_dict["div"]],
                         name="Dividend",
-                        line_color='yellow',
+                        marker=dict(
+                            color='yellow',
+                            size=8),
+                        line=dict(color='yellow', width=3),
                         opacity=0.8))
+        trace1.add_trace(go.Scatter(
+                        x=(df_daily.index),
+                        y=df_daily["Close"],
+                        name="Price",
+                        line_color='white'))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
         trace1.layout.xaxis.range = [ranger["x"][0],ranger["x"][1]]
 
