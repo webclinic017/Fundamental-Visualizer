@@ -9,13 +9,14 @@
 #TODO: BUGFIX DDD,KHC,PCG,PDD
 #TODO: Improve REIT functions
 from bs4 import BeautifulSoup
-import requests
+import subprocess
 import numpy as np
 import re
 import json
 import datetime
 import pandas as pd
 import yfinance as yf
+import wget
 
 def yahoo_data(symbol_yhoo,start,end):
     stock = yf.Ticker(symbol_yhoo)
@@ -30,9 +31,20 @@ def yahoo_data(symbol_yhoo,start,end):
 
 def morningstar_data(symbol_morn):
     #TODO: add handler for no returned data
-    url1 = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
+    #print(symbol_morn)
+    mylink = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
     #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
-    soup1 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url1).text)[0])['componentData'], 'lxml')
+
+    subprocess.call(["wget", '-O', 'data.txt', '-S', mylink])
+
+    f = open('data.txt', 'r')
+    print(f.read())
+
+    f = open('data.txt', 'r')
+    obj=re.findall(r'xxx\((.*)\)', f.read())[0]
+    obj = json.loads(obj)['componentData']
+    soup1 = BeautifulSoup(obj,'lxml')
+
     #soup2 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url2).text)[0])['componentData'], 'lxml')
 
     data = []
@@ -48,15 +60,28 @@ def morningstar_data(symbol_morn):
     for index, x in enumerate(data,0):
         data[index] = str(x).replace(',','')
 
-
-    arr = np.array([data[1:12], data[12:23], data[24:35], data[36:47], data[48:59], data[60:71],  data[72:83], data[84:95], data[96:107], data[108:119], data[120:131], data[132:143], data[144:155], data[156:167], data[168:179],  data[180:191]])
-    df_yearly = pd.DataFrame(arr.T,columns=[data[0],data[23], data[35], data[47], data[59], data[71], data[83], data[95], data[107], data[119], data[131], data[143], data[155], data[167], data[179], data[191]])
+    print(data)
+    x= [data[0],data[12], data[24], data[36], data[48], data[60], data[72], data[84], data[96], data[108], data[120], data[132], data[144], data[156], data[168], data[180]]
+    arr = [data[1:12], data[13:24], data[25:36], data[37:48], data[49:60], data[61:72],  data[73:84], data[85:96], data[97:108], data[109:120], data[121:132], data[133:144], data[145:156], data[157:168], data[169:180],  data[181:192]]
+    print(x[6])
+    index = data[1:12]
+    df_yearly = pd.DataFrame(columns=x)
+    print(df_yearly)
+    i=0
+    for col in df_yearly:
+        df_yearly[col] = arr[i]
+        print(arr[i])
+        i=i+1
+    print(df_yearly)
     df_yearly.drop([10], inplace=True)
     df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
     df_yearly.columns = df_yearly.columns.str.strip()
     df_yearly.set_index('Year', inplace=True)
     df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
+    print(df_yearly)
     earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
+    print(df_yearly.index)
+    print(df_yearly[earnings_col])
     morn_currency = str(earnings_col)[-5:-2]
     return df_yearly, morn_currency
 

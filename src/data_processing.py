@@ -69,26 +69,9 @@ def likely_deprecated(df_est):
             pass
             #print("**DEBUG-PRINT** pd.isnull(for x in df_est.index.values) == True")
 
-def base_plt(symbol, currency):
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize = (8,5))
-    ax.set_title(symbol)
-    ax.set_ylabel(currency)
-    #ax.spines["top"].set_visible(False)
-    #ax.spines["right"].set_visible(False)
-    #ax.spines["bottom"].set_visible(False)
-    #ax.spines["left"].set_visible(False)
-    #ax.get_xaxis().tick_bottom()
-    #ax.get_yaxis().tick_left()
-    #ax.set_axisbelow(True)
-    #ax.yaxis.grid(color='gray', linewidth=0.25)
-    ax.xaxis.grid(color='white', linewidth=0.25, alpha=0.9)
-    return fig, ax
-
 def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict,e_multiple):
     #TODO: Improve this function
     cut = (len(e_total_index_dt)-len(e_total))
-    fig, ax = base_plt(symbol, currency)
     xlabel = gen_xlabel(df_yearly,df_est)
     trace1 = go.Figure()
     ranger={"x":[],"y":[]}
@@ -104,13 +87,13 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=df_yearly.index,
                         y=df_yearly[col_dict["ofc"]],
                         name="OCF/FFO",
-                        line_color='blue',
+                        line_color='green',
                         fill='tozeroy'))
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='white',
+                        line_color='black',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
@@ -142,13 +125,13 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
                         name="EPS",
-                        line_color='blue',
+                        line_color='green',
                         fill='tozeroy'))
         trace1.add_trace(go.Scatter(
                         x=(df_daily.index),
                         y=df_daily["Close"],
                         name="Price",
-                        line_color='white',
+                        line_color='black',
                         opacity=0.8))
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
