@@ -54,7 +54,7 @@ app.layout = html.Div([dbc.Navbar([
                     {'label': u'Germany', 'value': 'Germany'},
                     {'label': u'Hongkong', 'value': 'Hongkong'},
                     {'label': u'Japan', 'value': 'Japan'},
-                    {'label': u'France', 'value': 'Canada'},
+                    {'label': u'France', 'value': 'France'},
                     {'label': u'UK', 'value': 'UK'},
                     {'label': u'Switzerland', 'value': 'Switzerland'},
                     {'label': u'Australia', 'value': 'Australia'},
