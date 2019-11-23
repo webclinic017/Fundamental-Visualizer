@@ -179,7 +179,6 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
 
     #TODO: Put in layout
     trace1.layout.template = 'plotly_dark'
-    trace1.layout.yaxis.rangemode= 'tozero'
     trace1.layout.plot_bgcolor= 'rgb(35,35,35)'
     trace1.layout.paper_bgcolor='rgb(35,35,35)'
     #trace1.layout.xaxis=dict(showgrid=False)
@@ -192,6 +191,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     trace1.layout.xaxis.nticks = len(e_total_index_dt)
     trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
     trace1.layout.height=575
+    trace1.layout.yaxis.autorange= True
+    trace1.layout.yaxis.rangemode= 'nonnegative'
     #trace1.layout.xaxis.mirror=True
     #trace1.layout.xaxis.ticks='outside'
     #trace1.layout.xaxis.showline=True
