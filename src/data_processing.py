@@ -74,6 +74,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     cut = (len(e_total_index_dt)-len(e_total))
     xlabel = gen_xlabel(df_yearly,df_est)
     trace1 = go.Figure()
+    trace1.layout.title= symbol
     ranger={"x":[],"y":[]}
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
@@ -153,7 +154,29 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
+
+    #TODO: Put in layout
     trace1.layout.template = 'plotly_dark'
+    trace1.layout.yaxis.rangemode= 'tozero'
+    trace1.layout.plot_bgcolor= 'rgb(35,35,35)'
+    trace1.layout.paper_bgcolor='rgb(35,35,35)'
+    #trace1.layout.xaxis=dict(showgrid=False)
+    trace1.layout.yaxis=dict(showgrid=False)
+    trace1.update_yaxes(title_text=currency)
+    trace1.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
+    trace1.layout.xaxis.gridcolor = "rgb(35,35,35)"
+    trace1.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
+    trace1.layout.yaxis.gridcolor = "rgb(255, 255, 255)"
+    trace1.layout.xaxis.nticks = len(e_total_index_dt)
+    trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
+    trace1.layout.height=575
+    #trace1.layout.xaxis.mirror=True
+    #trace1.layout.xaxis.ticks='outside'
+    #trace1.layout.xaxis.showline=True
+    #tickmode = 'array',
+    #tickvals = pd.to_datetime(e_total_index_dt),
+    #ticktext =  xlabel
+
     return trace1,ranger
 
 def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):

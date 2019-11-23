@@ -38,9 +38,6 @@ def morningstar_data(symbol_morn):
     subprocess.call(["wget", '-O', 'data.txt', '-S', mylink])
 
     f = open('data.txt', 'r')
-    print(f.read())
-
-    f = open('data.txt', 'r')
     obj=re.findall(r'xxx\((.*)\)', f.read())[0]
     obj = json.loads(obj)['componentData']
     soup1 = BeautifulSoup(obj,'lxml')
@@ -60,28 +57,21 @@ def morningstar_data(symbol_morn):
     for index, x in enumerate(data,0):
         data[index] = str(x).replace(',','')
 
-    print(data)
     x= [data[0],data[12], data[24], data[36], data[48], data[60], data[72], data[84], data[96], data[108], data[120], data[132], data[144], data[156], data[168], data[180]]
     arr = [data[1:12], data[13:24], data[25:36], data[37:48], data[49:60], data[61:72],  data[73:84], data[85:96], data[97:108], data[109:120], data[121:132], data[133:144], data[145:156], data[157:168], data[169:180],  data[181:192]]
-    print(x[6])
     index = data[1:12]
     df_yearly = pd.DataFrame(columns=x)
-    print(df_yearly)
     i=0
     for col in df_yearly:
         df_yearly[col] = arr[i]
         print(arr[i])
         i=i+1
-    print(df_yearly)
     df_yearly.drop([10], inplace=True)
     df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
     df_yearly.columns = df_yearly.columns.str.strip()
     df_yearly.set_index('Year', inplace=True)
     df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
-    print(df_yearly)
     earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
-    print(df_yearly.index)
-    print(df_yearly[earnings_col])
     morn_currency = str(earnings_col)[-5:-2]
     return df_yearly, morn_currency
 

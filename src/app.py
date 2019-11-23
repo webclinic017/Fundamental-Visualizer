@@ -10,7 +10,6 @@ import plotly.graph_objs as go
 import pandas as pd
 import datetime
 
-
 class storage:
     def __init__(self):
         self.previous_request = []
@@ -31,49 +30,54 @@ class storage:
         return trace1,pe,pe_norm,grw,grw_exp
 
 strg = storage()
-app = dash.Dash('FunViz', external_stylesheets=[dbc.themes.CYBORG])
+PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+app = dash.Dash('FunViz', external_stylesheets=[dbc.themes.DARKLY])
 app.title = "FunViz"
+#Simple(children=
 
+app.layout = html.Div([dbc.Navbar([
+    dbc.Row(
+                [
+                    dbc.Col(html.Img(src=PLOTLY_LOGO, height="50px")),
+                    dbc.Col(html.H3("FunViz")),
+                ],
+            ),
+    dbc.Row([
+        dbc.Col([
+            #dbc.Label('     '),
+        ]),
+        dbc.Col([
+            html.Label('Country: '),
+            html.Div([dcc.Dropdown(id='country-input',
+                options=[
+                    {'label': u'USA', 'value': 'USA'},
+                    {'label': u'Germany', 'value': 'Germany'},
+                    {'label': u'Hongkong', 'value': 'Hongkong'},
+                    {'label': u'Japan', 'value': 'Japan'},
+                    {'label': u'France', 'value': 'Canada'},
+                    {'label': u'UK', 'value': 'UK'},
+                    {'label': u'Switzerland', 'value': 'Switzerland'},
+                    {'label': u'Australia', 'value': 'Australia'},
+                    {'label': u'Korea', 'value': 'Korea'},
+                    {'label': u'Netherlands', 'value': 'Netherlands'},
+                    {'label': u'Spain', 'value': 'Spain'},
+                    {'label': u'Russia', 'value': 'Russia'},
+                    {'label': u'Italy', 'value': 'Italy'},
+                    {'label': u'Belgium', 'value': 'Belgium'},
+                    {'label': u'Mexiko', 'value': 'Mexiko'},
+                    {'label': u'Sweden', 'value': 'Sweden'},
+                    {'label': u'Norway', 'value': 'Norway'},
+                    {'label': u'Finland', 'value': 'Finland'},
+                    {'label': u'Denmark', 'value': 'Denmark'},
+                ],
+                value='USA'
+            )],style={'color': 'black','width': '200px'}),
 
-colors = {
-    'background': '#111111',
-    'text': '#7FDBFF'
-}
+            ]),
 
-app.layout = html.Div([html.H3('FunViz'),
-    html.Div([
-        html.Div([
-                html.Label('Country: '),
-                dcc.Dropdown(
-                    id='country-input',
-                    options=[
-                        {'label': u'USA', 'value': 'USA'},
-                        {'label': u'Germany', 'value': 'Germany'},
-                        {'label': u'Hongkong', 'value': 'Hongkong'},
-                        {'label': u'Japan', 'value': 'Japan'},
-                        {'label': u'France', 'value': 'Canada'},
-                        {'label': u'UK', 'value': 'UK'},
-                        {'label': u'Switzerland', 'value': 'Switzerland'},
-                        {'label': u'Australia', 'value': 'Australia'},
-                        {'label': u'Korea', 'value': 'Korea'},
-                        {'label': u'Netherlands', 'value': 'Netherlands'},
-                        {'label': u'Spain', 'value': 'Spain'},
-                        {'label': u'Russia', 'value': 'Russia'},
-                        {'label': u'Italy', 'value': 'Italy'},
-                        {'label': u'Belgium', 'value': 'Belgium'},
-                        {'label': u'Mexiko', 'value': 'Mexiko'},
-                        {'label': u'Sweden', 'value': 'Sweden'},
-                        {'label': u'Norway', 'value': 'Norway'},
-                        {'label': u'Finland', 'value': 'Finland'},
-                        {'label': u'Denmark', 'value': 'Denmark'},
-                    ],
-                    value='USA'
-                )
-            ],style={'width': '30%'}, className="six columns"),
-
-            html.Div([
+            dbc.Col([
                 html.Label('Style: '),
-                dcc.Dropdown(
+                html.Div([dcc.Dropdown(
                     id='style-input',
                     options=[
                         {'label': u'Base', 'value': 'Base'},
@@ -81,49 +85,91 @@ app.layout = html.Div([html.H3('FunViz'),
                         {'label': u'PEG85', 'value': 'PEG85'},
                         {'label': u'PE-Plot', 'value': 'PE-Plot'},
                         {'label': u'REIT', 'value': 'REIT'},
-                    ],
-                    value='Base'
-                )
-            ],style={'width': '30%'}, className="six columns"),
-            html.Div([
+                        ],
+                        value='Base'
+                )],style={'color': 'black','width': '100px'}),
+            ]),
+            dbc.Col([
                 html.Label('Ticker: '),
-                dcc.Input(id='ticker-input', value='AAPL', type='text'),
-                html.Button(id='update-input', type='Update', children='Update')
-            ],style={'width': '30%'}, className="six columns"),
-        ], className="row"),
+                dbc.Input(id="ticker-input", type="text",value='AAPL'),
+            ]),
+            dbc.Col([
+                #html.Button(id='update-input', type='Update', children='Update'),
+                dbc.Button("Update", id="update-input", size="lg"),
+            ],align="bottom"),
+            dbc.Col([
+                #dbc.Label('     '),
+            ]),
+            dbc.Col([
+                dbc.Nav([
+                    dbc.NavItem(dbc.NavLink("ReadMe",active=True, href="http://paypal.me/tobigsIO")),
+                ],pills=True),
+            ]),
+            dbc.Col([
+                dbc.Nav([
+                    dbc.NavItem(dbc.NavLink("Sponsor",active=True, href="http://paypal.me/tobigsIO")),
+                ],pills=True),
+            ],align="center"),
+        ],align="center",className="dash-bootstrap"),
+    ],className="dash-bootstrap"),
         html.Br(),
-        html.Div(
-            html.Div([
-                html.Div([
-                    html.Label('PE'),
-                    html.Div(id='pe')
-                ],style={'width': '20%'}, className="six columns"),
+        dbc.Row([
+                dbc.Col([
+                    dbc.Label('      '),
+                ],align="center"),
+                dbc.Col([
+                    dbc.Label('PE'),
+                    dbc.Input(id='pe', type="text")
+                ],align="center"),
 
-                html.Div([
-                    html.Label('Normal PE'),
-                    html.Div(id='pe_norm')
-                ],style={'width': '20%'}, className="six columns"),
+                dbc.Col([
+                    dbc.Label('Normal PE'),
+                    dbc.Input(id='pe_norm', type="text")
+                ],align="center"),
 
-                html.Div([
-                    html.Label('Growth Rate'),
-                    html.Div(id='grw')
-                ],style={'width': '20%'}, className="six columns"),
+                dbc.Col([
+                    dbc.Label('Growth Rate'),
+                    dbc.Input(id='grw', type="text")
+                ],align="center"),
 
-                html.Div([
-                    html.Label('exp. Growth Rate'),
-                    html.Div(id='grw_exp',style={"border":"2px black solid"})
-                ],style={'width': '20%'}, className="six columns"),
-            ], className="row")
-        ),
-        html.Div(dcc.Graph(id='graph-output'))]
+                dbc.Col([
+                    dbc.Label('exp. Growth Rate'),
+                    dbc.Input(id='grw_exp', type="text")
+                ],align="center"),
+                dbc.Col([
+                    dbc.Label('      '),
+                ],align="center"),
+        ],align="center"),
+        html.Div(dcc.Graph(id='graph-output',config={
+                    'displayModeBar': False
+                },
+                figure={
+                    'data': [],
+                    'layout': go.Layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        xaxis={
+                            'showticklabels': False,
+                            'ticks': '',
+                            'showgrid': False,
+                            'zeroline': False
+                        },
+                        yaxis={
+                            'showticklabels': False,
+                            'ticks': '',
+                            'showgrid': False,
+                            'zeroline': False
+                        }
+                    )
+                }))],className="dash-bootstrap"
 )
 
 @app.callback([
     Output('graph-output', 'figure'),
-    Output('pe', 'children'),
-    Output('pe_norm', 'children'),
-    Output('grw', 'children'),
-    Output('grw_exp', 'children')],
+    Output('pe', 'value'),
+    Output('pe_norm', 'value'),
+    Output('grw', 'value'),
+    Output('grw_exp', 'value')],
     [Input('update-input', 'n_clicks')],
     [State('ticker-input', 'value'),
      State('country-input','value'),
@@ -141,10 +187,3 @@ app.css.append_css({
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-'''
-    Output('graph', 'pe':'value'),
-    Output('pe_norm', 'pe_norm':'value'),
-    Output('grw', 'grw':'value'),
-    Output('grw_exp', 'grw_exp':'value')
-'''
