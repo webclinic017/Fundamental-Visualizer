@@ -270,7 +270,7 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     #TODO: Improve cutting
     if len_cut >0:
         print(df_est["Median EPS"])
-
+        est_empty = False
         for x in pd.isnull(df_est["Median EPS"]):
             if x == True:
                 est_empty = True
