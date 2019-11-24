@@ -6,7 +6,7 @@
 #TODO: Store data and request other graph, same symbol
 #TODO: b-shares handler
 #TODO: improve column selection
-#TODO: BUGFIX DDD,KHC,PCG,PDD
+#TODO: BUGFIX DDD,KHC,PCG,PDD, TEAM
 #TODO: Improve REIT functions
 from bs4 import BeautifulSoup
 import subprocess

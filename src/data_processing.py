@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #TODO: function for reverting dataframes after multiplication with e_multiple
+#TODO: add ocf and fcf to base, add dividend yield, fcf yield to pe-plot (don't show initially)
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
