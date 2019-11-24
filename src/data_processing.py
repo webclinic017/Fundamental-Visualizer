@@ -148,6 +148,12 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         hovertext=hvrtxt["pe"],
                         line_color='orange',
                         name="PE"))
+        maxvar = 100.0
+        minvar = 0.1
+        if df_daily["blended_pe"].max()<maxvar:
+            maxvar = df_daily["blended_pe"].max()
+        if df_daily["blended_pe"].min()>minvar:
+            minvar = df_daily["blended_pe"].min()-1
     else:
         ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
         ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
@@ -219,17 +225,21 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         trace1.update_yaxes(title_text="PE");
     else:
         trace1.update_yaxes(title_text=currency)
-    trace1.layout.yaxis.autorange= True
-    trace1.layout.yaxis.rangemode= 'nonnegative'
     #trace1.layout.xaxis.mirror=True
     #trace1.layout.xaxis.ticks='outside'
     trace1.layout.yaxis.showline=True
     trace1.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
     trace1.layout.xaxis.gridcolor = "rgb(35,35,35)"
     trace1.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
-    trace1.layout.xaxis.linecolor = "rgb(255, 255, 255)"
+    trace1.layout.xaxis.linecolor = "rgb(35,35,35)"
     trace1.layout.yaxis.linecolor = "rgb(35,35,35)"
     trace1.layout.yaxis.gridcolor = "rgb(35,35,35)"
+    if style == "PE-Plot":
+        print(minvar, maxvar)
+        trace1.layout.yaxis.range=[minvar, maxvar]
+    else:
+        trace1.layout.yaxis.autorange= True
+        trace1.layout.yaxis.rangemode= 'nonnegative'
     #tickmode = 'array',
     #tickvals = pd.to_datetime(e_total_index_dt),
     #ticktext =  xlabel
