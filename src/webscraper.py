@@ -27,6 +27,8 @@ def yahoo_data(symbol_yhoo,start,end):
         print("Currency Conversion not supported/necessary.")
         print("Yahoo Error:", ex)
     df_daily = yf.download(symbol_yhoo,start,end)
+    if not df_daily.empty:
+        print("Received Yahoo Data.")
     return df_daily,yahoo_currency
 
 def morningstar_data(symbol_morn):

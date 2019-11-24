@@ -87,6 +87,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         hvrtxt["eps"].append(round(x/e_multiple,2))
     for x in e_total_norm:
         hvrtxt["pe_norm"].append("Price @ Normal Multiple: " + str(round(x,2)))
+    print("Created Hovertext.")
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]]/df_yearly[col_dict["shrs"]]
@@ -159,7 +160,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
         ranger["y"].append((e_total.min()))
         ranger["y"].append((e_total.max()))
-        df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*e_multiple)
+        print(df_daily["Close"])
         trace1.add_trace(go.Scatter(
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
@@ -188,17 +189,22 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                             size=8),
                         line=dict(color='orange', width=3),
                         opacity=0.8))
-        trace1.add_trace(go.Scatter(
-                        x=pd.to_datetime(df_yearly.index),
-                        y=df_yearly[col_dict["div"]],
-                        name="Dividend",
-                        hoverinfo="x+text+name",
-                        hovertext=hvrtxt["div"],
-                        marker=dict(
-                            color='yellow',
-                            size=8),
-                        line=dict(color='yellow', width=3),
-                        opacity=0.8))
+        try:
+            df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*e_multiple)
+            trace1.add_trace(go.Scatter(
+                x=pd.to_datetime(df_yearly.index),
+                y=df_yearly[col_dict["div"]],
+                name="Dividend",
+                hoverinfo="x+text+name",
+                hovertext=hvrtxt["div"],
+                marker=dict(
+                    color='yellow',
+                    size=8),
+                line=dict(color='yellow', width=3),
+                opacity=0.8))
+            df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
+        except Exception as ex:
+            print(ex)
         trace1.add_trace(go.Scatter(
                         x=(df_daily.index),
                         y=df_daily["Close"],
@@ -206,7 +212,7 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         hovertext=hvrtxt["price"],
                         name="Price",
                         line_color='white'))
-        df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
+        print("Added data to plot.")
         trace1.layout.xaxis.range = [ranger["x"][0],ranger["x"][1]]
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*(1/e_multiple))
@@ -261,15 +267,31 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     nan_cut = ~np.isnan(e_total)
     e_total = e_total[nan_cut]
     len_cut = len(e_total_index_dt)-len(e_total)
+    #TODO: Improve cutting
     if len_cut >0:
-        e_total_index_dt = e_total_index_dt[:-len_cut]
-        e_total_index_int = e_total_index_int[:-len_cut]
+        print(df_est["Median EPS"])
+
+        for x in pd.isnull(df_est["Median EPS"]):
+            if x == True:
+                est_empty = True
+        print("Testing if estimates are empty, result: ",est_empty)
+        if est_empty:
+            e_total_index_dt = e_total_index_dt[:-len_cut]
+            e_total_index_int = e_total_index_int[:-len_cut]
+            print("Cutting back to front.")
+        else:
+            e_total_index_dt = e_total_index_dt[len_cut:]
+            e_total_index_int = e_total_index_int[len_cut:]
+            print("Cutting front to back.")
 
     #TODO: check and then remove this
     likely_deprecated(df_est)
 
-    grw, grw_exp = grw_calc(e_total)
-    e_multiple, normal_multiple, current_pe = pe_calc(df_daily, e_total_index_int, e_total, grw_exp, style)
+    try:
+        grw, grw_exp = grw_calc(e_total)
+        e_multiple, normal_multiple, current_pe = pe_calc(df_daily, e_total_index_int, e_total, grw_exp, style)
+    except Exception as ex:
+        print("Growth/PE Calc failed:" + str(ex))
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(lambda x: x*e_multiple)
     df_est["Median EPS"] = df_est["Median EPS"]*e_multiple
@@ -285,7 +307,10 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
         #self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + " %"
 
     #TODO: gen_plt better not as function?
-    trace1,range = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    try:
+        trace1,range = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    except Exception as ex:
+        print("Plot generation failed:" + str(ex))
 
     return trace1, str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2))+ " %"), (str(round(grw_exp, 2))+ " %")
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
