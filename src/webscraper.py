@@ -129,6 +129,7 @@ def pegc():
     '''
 
 def gen_symbol(symbol,country):
+    symbol = symbol.upper()
     df_exchange = pd.DataFrame(index=["Germany","Hongkong","Japan","France","Canada","UK","Switzerland", "Australia","Korea","Netherlands","Spain","Russia","Italy","Belgium","Mexiko","Sweden","Norway","Finland","Denmark"])
     df_exchange["Morningstar"] = ["XETR:","XHKG:","XTKS:","XPAR:","XTSE:","XLON:","XSWX:","XASX:","XKRX:","XAMS:","XMAD:","MISX:","XMIL:","XBRU:","XMEX:","XSTO:","XOSL:","XHEL:","XCSE:"]
     df_exchange["Yahoo"] = [".DE",".HK",".T",".PA",".TO",".L",".SW",".AX",".KS",".AS",".MC",".ME",".MI",".BR",".MX",".ST",".OL",".HE",".CO"]
@@ -143,6 +144,7 @@ def gen_symbol(symbol,country):
             symbol_morn = symbol_morn + "."
         if country == "Hongkong" and len(symbol_yhoo)<7:
             symbol_yhoo = (7-len(symbol_yhoo))*"0" + symbol_yhoo
+    print("Symbols: " + symbol_morn + " " + symbol_yhoo)
     return symbol_morn, symbol_yhoo
 
 def currency_conv(df_daily,df_yearly,df_est,yahoo_currency,est_currency,currency,end,country):

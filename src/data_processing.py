@@ -76,18 +76,33 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     trace1 = go.Figure()
     trace1.layout.title= symbol.upper()
     ranger={"x":[],"y":[]}
+    hvrtxt = {"div":[],"eps":[],"pe_norm":[],"ocf":[],"price":[],"pe":[]}
+    for x in df_daily["Close"]:
+        hvrtxt["price"].append(round(x,2))
+    for x in df_daily["blended_pe"]:
+        hvrtxt["pe"].append(round(x,2))
+    for x in  df_yearly[col_dict["div"]]:
+        hvrtxt["div"].append(x)
+    for x in e_total:
+        hvrtxt["eps"].append(round(x/e_multiple,2))
+    for x in e_total_norm:
+        hvrtxt["pe_norm"].append("Price @ Normal Multiple: " + str(round(x,2)))
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*15)
-        df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]/df_yearly[col_dict["shrs"]]
-        df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*15)
+        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]]/df_yearly[col_dict["shrs"]]
+        for x in df_yearly[col_dict["ocf"]]:
+            hvrtxt["ocf"].append(round(x,2))
+        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(lambda x: x*15)
         ranger["x"].append(df_yearly.index.min())
         ranger["x"].append(df_yearly.index.max())
-        ranger["y"].append(df_yearly[col_dict["ofc"]].min())
-        ranger["y"].append(df_yearly[col_dict["ofc"]].max())
+        ranger["y"].append(df_yearly[col_dict["ocf"]].min())
+        ranger["y"].append(df_yearly[col_dict["ocf"]].max())
         trace1.add_trace(go.Scatter(
                         x=df_yearly.index,
-                        y=df_yearly[col_dict["ofc"]],
+                        y=df_yearly[col_dict["ocf"]],
                         name="OCF/FFO",
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["ocf"],
                         marker=dict(
                             color='white',
                             size=9,
@@ -102,6 +117,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=df_yearly.index,
                         y=df_yearly[col_dict["div"]],
                         name="Dividend",
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["div"],
                         marker=dict(
                             color='yellow',
                             size=8),
@@ -110,12 +127,14 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["Close"],
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["price"],
                         name="Price",
                         line_color='white'))
         trace1.layout.xaxis.range = [ranger["x"][0],df_daily.index.max()]
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/15))
-        df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]].apply(lambda x: x*(1/15))
-        df_yearly[col_dict["ofc"]] = df_yearly[col_dict["ofc"]]*df_yearly[col_dict["shrs"]]
+        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(lambda x: x*(1/15))
+        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]]*df_yearly[col_dict["shrs"]]
 
     elif style == "PE-Plot":
         ranger["x"].append(df_daily.index.min())
@@ -125,6 +144,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         trace1.add_trace(go.Scatter(
                         x=df_daily.index,
                         y=df_daily["blended_pe"],
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["pe"],
                         line_color='orange',
                         name="PE"))
     else:
@@ -137,6 +158,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total,
                         name="EPS",
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["eps"],
                         marker=dict(
                             color='white',
                             size=9,
@@ -152,6 +175,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(e_total_index_dt),
                         y=e_total_norm,
                         name="Normal PE",
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["pe_norm"],
                         marker=dict(
                             color='orange',
                             size=8),
@@ -161,6 +186,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
                         x=pd.to_datetime(df_yearly.index),
                         y=df_yearly[col_dict["div"]],
                         name="Dividend",
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["div"],
                         marker=dict(
                             color='yellow',
                             size=8),
@@ -169,6 +196,8 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
         trace1.add_trace(go.Scatter(
                         x=(df_daily.index),
                         y=df_daily["Close"],
+                        hoverinfo="x+text+name",
+                        hovertext=hvrtxt["price"],
                         name="Price",
                         line_color='white'))
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(lambda x: x*(1/e_multiple))
@@ -182,20 +211,25 @@ def gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,styl
     trace1.layout.plot_bgcolor= 'rgb(35,35,35)'
     trace1.layout.paper_bgcolor='rgb(35,35,35)'
     #trace1.layout.xaxis=dict(showgrid=False)
-    trace1.layout.yaxis=dict(showgrid=False)
-    trace1.update_yaxes(title_text=currency)
-    trace1.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
-    trace1.layout.xaxis.gridcolor = "rgb(35,35,35)"
-    trace1.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
-    trace1.layout.yaxis.gridcolor = "rgb(255, 255, 255)"
+    #trace1.layout.yaxis=dict(showgrid=False)
     trace1.layout.xaxis.nticks = len(e_total_index_dt)
     trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
     trace1.layout.height=575
+    if style == "PE-Plot":
+        trace1.update_yaxes(title_text="PE");
+    else:
+        trace1.update_yaxes(title_text=currency)
     trace1.layout.yaxis.autorange= True
     trace1.layout.yaxis.rangemode= 'nonnegative'
     #trace1.layout.xaxis.mirror=True
     #trace1.layout.xaxis.ticks='outside'
-    #trace1.layout.xaxis.showline=True
+    trace1.layout.yaxis.showline=True
+    trace1.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
+    trace1.layout.xaxis.gridcolor = "rgb(35,35,35)"
+    trace1.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
+    trace1.layout.xaxis.linecolor = "rgb(255, 255, 255)"
+    trace1.layout.yaxis.linecolor = "rgb(35,35,35)"
+    trace1.layout.yaxis.gridcolor = "rgb(35,35,35)"
     #tickmode = 'array',
     #tickvals = pd.to_datetime(e_total_index_dt),
     #ticktext =  xlabel
@@ -207,7 +241,7 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
     ocf_col = df_yearly.filter(like='Operating Cash').columns[0]
     dividend_col = df_yearly.filter(like='Divid').columns[0]
     shares_col = df_yearly.filter(like='Shares').columns[0]
-    col_dict = {"e" :earnings_col,"ofc": ocf_col,"div": dividend_col,"shrs": shares_col}
+    col_dict = {"e" :earnings_col,"ocf": ocf_col,"div": dividend_col,"shrs": shares_col}
     #TODO: implement col_dict in data_processing
 
     e_total = np.append(pd.to_numeric(df_yearly[col_dict["e"]].values, errors='coerce'),pd.to_numeric(df_est["Median EPS"].values, errors='coerce'))
