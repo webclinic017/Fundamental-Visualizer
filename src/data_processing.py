@@ -271,11 +271,11 @@ def data_processing(df_daily ,df_yearly, df_est, symbol, style, currency):
 
             #self.disp_pe["text"] = str(round(pe, 2))
         #self.disp_pe_norm["text"] = str(round(pe_norm, 2))
-        #self.disp_grw["text"] = str(round(grw, 2)) + "%"
-        #self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + "%"
+        #self.disp_grw["text"] = str(round(grw, 2)) + " %"
+        #self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + " %"
 
     #TODO: gen_plt better not as function?
     trace1,range = gen_plt(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
 
-    return trace1, str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2))+ "%"), (str(round(grw_exp, 2))+ "%")
+    return trace1, str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2))+ " %"), (str(round(grw_exp, 2))+ " %")
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)

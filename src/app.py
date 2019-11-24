@@ -39,7 +39,7 @@ app.layout = html.Div([dbc.Navbar([
     dbc.Row(
                 [
                     dbc.Col(html.Img(src=PLOTLY_LOGO, height="50px")),
-                    dbc.Col(html.H3("FunViz")),
+                    dbc.Col(html.H2("FunViz")),
                 ],
             ),
     dbc.Row([
@@ -71,7 +71,7 @@ app.layout = html.Div([dbc.Navbar([
                     {'label': u'Denmark', 'value': 'Denmark'},
                 ],
                 value='USA'
-            )],style={'color': 'black','width': '200px'}),
+            )],style={'color': 'black','width': '150px'}),
 
             ]),
 
@@ -81,13 +81,13 @@ app.layout = html.Div([dbc.Navbar([
                     id='style-input',
                     options=[
                         {'label': u'Base', 'value': 'Base'},
-                        {'label': u'PE15', 'value': 'PE15'},
-                        {'label': u'PEG85', 'value': 'PEG85'},
+                        {'label': u'PE 15', 'value': 'PE15'},
+                        {'label': u'PEG 8.5', 'value': 'PEG85'},
                         {'label': u'PE-Plot', 'value': 'PE-Plot'},
-                        {'label': u'REIT', 'value': 'REIT'},
+                        {'label': u'FFO/OCF', 'value': 'REIT'},
                         ],
                         value='Base'
-                )],style={'color': 'black','width': '100px'}),
+                )],style={'color': 'black','width': '120px'}),
             ]),
             dbc.Col([
                 html.Label('Ticker: '),
@@ -119,22 +119,22 @@ app.layout = html.Div([dbc.Navbar([
                 ],align="center"),
                 dbc.Col([
                     dbc.Label('PE'),
-                    dbc.Input(id='pe', type="text")
+                    html.Div(dbc.Input(id='pe', type="text"),style={'width':130})
                 ],align="center"),
 
                 dbc.Col([
                     dbc.Label('Normal PE'),
-                    dbc.Input(id='pe_norm', type="text")
+                    html.Div(dbc.Input(id='pe_norm', type="text"),style={'width':130})
                 ],align="center"),
 
                 dbc.Col([
                     dbc.Label('Growth Rate'),
-                    dbc.Input(id='grw', type="text")
+                    html.Div(dbc.Input(id='grw', type="text"),style={'width':130})
                 ],align="center"),
 
                 dbc.Col([
                     dbc.Label('exp. Growth Rate'),
-                    dbc.Input(id='grw_exp', type="text")
+                    html.Div(dbc.Input(id='grw_exp', type="text"),style={'width':130}),
                 ],align="center"),
                 dbc.Col([
                     dbc.Label('      '),
