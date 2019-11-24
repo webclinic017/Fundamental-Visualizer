@@ -147,9 +147,7 @@ app.layout = html.Div([dbc.Navbar([
                     color="warning",
                     is_open=False,
                 )),
-        dcc.Graph(id='graph-output',config={
-                    'displayModeBar': False
-                },
+        dcc.Graph(id='graph-output',
                 figure={
                     'data': [],
                     'layout': go.Layout(
