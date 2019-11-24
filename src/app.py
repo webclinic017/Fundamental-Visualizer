@@ -147,7 +147,7 @@ app.layout = html.Div([dbc.Navbar([
                     color="warning",
                     is_open=False,
                 )),
-        html.Div(dcc.Graph(id='graph-output',config={
+        dcc.Graph(id='graph-output',config={
                     'displayModeBar': False
                 },
                 figure={
@@ -169,7 +169,7 @@ app.layout = html.Div([dbc.Navbar([
                         }
                     )
                 }
-            ))],className="dash-bootstrap"
+            )],className="dash-bootstrap"
 )
 
 @app.callback([
