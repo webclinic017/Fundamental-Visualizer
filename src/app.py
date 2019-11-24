@@ -102,7 +102,7 @@ app.layout = html.Div([dbc.Navbar([
             ]),
             dbc.Col([
                 dbc.Nav([
-                    dbc.NavItem(dbc.NavLink("ReadMe",active=True, href="http://paypal.me/tobigsIO")),
+                    dbc.NavItem(dbc.NavLink("ReadMe",active=True, href="https://github.com/tobigs/FunViz",external_link=True)),
                 ],pills=True),
             ]),
             dbc.Col([
