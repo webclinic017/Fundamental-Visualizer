@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#TODO: add data table
+#TODO: hide scrollbar
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -64,7 +66,6 @@ app.layout = html.Div([dbc.Navbar([
                     {'label': u'Russia', 'value': 'Russia'},
                     {'label': u'Italy', 'value': 'Italy'},
                     {'label': u'Belgium', 'value': 'Belgium'},
-                    {'label': u'Mexiko', 'value': 'Mexiko'},
                     {'label': u'Sweden', 'value': 'Sweden'},
                     {'label': u'Norway', 'value': 'Norway'},
                     {'label': u'Finland', 'value': 'Finland'},
@@ -81,8 +82,8 @@ app.layout = html.Div([dbc.Navbar([
                     id='style-input',
                     options=[
                         {'label': u'Base', 'value': 'Base'},
-                        {'label': u'PE 15', 'value': 'PE15'},
-                        {'label': u'PEG 8.5', 'value': 'PEG85'},
+                        {'label': u'PE(15)', 'value': 'PE15'},
+                        {'label': u'PEG(8.5)', 'value': 'PEG85'},
                         {'label': u'PE-Plot', 'value': 'PE-Plot'},
                         {'label': u'FFO/OCF', 'value': 'REIT'},
                         ],
@@ -140,7 +141,15 @@ app.layout = html.Div([dbc.Navbar([
                     dbc.Label('      '),
                 ],align="center"),
         ],align="center"),
-        html.Div(dcc.Graph(id='graph-output',config={
+        html.Div([dbc.Alert(
+                    "Couldn't find any stocks matching your request.",
+                    id="alert",
+                    dismissable=True,
+                    fade=True,
+                    color="warning",
+                    is_open=False,
+                ),
+                dcc.Graph(id='graph-output',config={
                     'displayModeBar': False
                 },
                 figure={
@@ -161,7 +170,8 @@ app.layout = html.Div([dbc.Navbar([
                             'zeroline': False
                         }
                     )
-                }))],className="dash-bootstrap"
+                }
+            )])],className="dash-bootstrap"
 )
 
 @app.callback([
@@ -169,7 +179,8 @@ app.layout = html.Div([dbc.Navbar([
     Output('pe', 'value'),
     Output('pe_norm', 'value'),
     Output('grw', 'value'),
-    Output('grw_exp', 'value')],
+    Output('grw_exp', 'value'),
+    Output('alert','is_open')],
     [Input('update-input', 'n_clicks')],
     [State('ticker-input', 'value'),
      State('country-input','value'),
@@ -177,9 +188,16 @@ app.layout = html.Div([dbc.Navbar([
     )
 
 def update_graph_output(n_clicks,symbol,country,style):
-    figure,pe,pe_norm,grw,grw_exp = strg.update(country,symbol,style)
-    print(pe,pe_norm,grw,grw_exp)
-    return figure, str(pe), str(pe_norm), str(grw), str(grw_exp)
+    try:
+        figure,pe,pe_norm,grw,grw_exp = strg.update(country,symbol,style)
+        print("success")
+        print(pe,pe_norm,grw,grw_exp)
+        return figure, str(pe), str(pe_norm), str(grw), str(grw_exp),False
+    except Exception as ex:
+        print("Failure:", ex)
+        return None,None,None,None,None,True
+
+
 
 app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
