@@ -28,7 +28,7 @@ class storage:
         trace1,pe,pe_norm,grw,grw_exp = data_processing(*processing_request)
         print("Data processed.")
         return trace1,pe,pe_norm,grw,grw_exp
-
+init_fig =figure={'data': [],'layout': go.Layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',xaxis={'showticklabels': False,'ticks': '','showgrid': False,'zeroline': False},yaxis={'showticklabels': False,'ticks': '','showgrid': False,'zeroline': False})}
 strg = storage()
 PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
 app = dash.Dash('FunViz', external_stylesheets=[dbc.themes.DARKLY])
@@ -193,7 +193,10 @@ def update_graph_output(n_clicks,symbol,country,style):
         return figure, str(pe), str(pe_norm), str(grw), str(grw_exp),False
     except Exception as ex:
         print("Failure:", ex)
-        return None,None,None,None,None,True
+        return init_fig,None,None,None,None,True
+    print("debug-print")
+    figure,pe,pe_norm,grw,grw_exp = strg.update(country,symbol,style)
+    return figure, str(pe), str(pe_norm), str(grw), str(grw_exp),False
 
 
 
