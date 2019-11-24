@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-#TODO: add data table
-#TODO: hide scrollbar
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -141,15 +139,15 @@ app.layout = html.Div([dbc.Navbar([
                     dbc.Label('      '),
                 ],align="center"),
         ],align="center"),
-        html.Div([dbc.Alert(
+        html.Div(dbc.Alert(
                     "Couldn't find any stocks matching your request.",
                     id="alert",
                     dismissable=True,
                     fade=True,
                     color="warning",
                     is_open=False,
-                ),
-                dcc.Graph(id='graph-output',config={
+                )),
+        html.Div(dcc.Graph(id='graph-output',config={
                     'displayModeBar': False
                 },
                 figure={
@@ -171,7 +169,7 @@ app.layout = html.Div([dbc.Navbar([
                         }
                     )
                 }
-            )])],className="dash-bootstrap"
+            ))],className="dash-bootstrap"
 )
 
 @app.callback([
