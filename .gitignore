@@ -1,0 +1,5 @@
+.vscode/
+data.txt
+graphs/
+src/__pycache__/
+src/backup/
