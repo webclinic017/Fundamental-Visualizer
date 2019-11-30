@@ -50,28 +50,28 @@ app.layout = html.Div([dbc.Navbar([
         dbc.Col([
             html.Label('Country: '),
             html.Div([dcc.Dropdown(id='country-input',
-               options=[
-                   {'label': u'USA', 'value': 'USA'},
-                   {'label': u'Germany', 'value': 'Germany'},
-                   {'label': u'Hongkong', 'value': 'Hongkong'},
-                   {'label': u'Japan', 'value': 'Japan'},
-                   {'label': u'France', 'value': 'France'},
-                   {'label': u'UK', 'value': 'UK'},
-                   {'label': u'Switzerland','value': 'Switzerland'},
-                   {'label': u'Australia','value': 'Australia'},
-                   {'label': u'Korea', 'value': 'Korea'},
-                   {'label': u'Netherlands','value': 'Netherlands'},
-                   {'label': u'Spain', 'value': 'Spain'},
-                   {'label': u'Russia', 'value': 'Russia'},
-                   {'label': u'Italy', 'value': 'Italy'},
-                   {'label': u'Belgium', 'value': 'Belgium'},
-                   {'label': u'Sweden', 'value': 'Sweden'},
-                   {'label': u'Norway', 'value': 'Norway'},
-                   {'label': u'Finland', 'value': 'Finland'},
-                   {'label': u'Denmark', 'value': 'Denmark'},
-               ],
-               value='USA'
-               )],style={'color': 'black','width': '150px'}),
+                                   options=[
+                                       {'label': u'USA', 'value': 'USA'},
+                                       {'label': u'Germany', 'value': 'Germany'},
+                                       {'label': u'Hongkong', 'value': 'Hongkong'},
+                                       {'label': u'Japan', 'value': 'Japan'},
+                                       {'label': u'France', 'value': 'France'},
+                                       {'label': u'UK', 'value': 'UK'},
+                                       {'label': u'Switzerland', 'value': 'Switzerland'},
+                                       {'label': u'Australia', 'value': 'Australia'},
+                                       {'label': u'Korea', 'value': 'Korea'},
+                                       {'label': u'Netherlands', 'value': 'Netherlands'},
+                                       {'label': u'Spain', 'value': 'Spain'},
+                                       {'label': u'Russia', 'value': 'Russia'},
+                                       {'label': u'Italy', 'value': 'Italy'},
+                                       {'label': u'Belgium', 'value': 'Belgium'},
+                                       {'label': u'Sweden', 'value': 'Sweden'},
+                                       {'label': u'Norway', 'value': 'Norway'},
+                                       {'label': u'Finland', 'value': 'Finland'},
+                                       {'label': u'Denmark', 'value': 'Denmark'},
+                                   ],
+                                   value='USA'
+                                   )], style={'color': 'black', 'width': '150px'}),
         ]),
         dbc.Col([
                 html.Label('Style: '),
@@ -85,11 +85,12 @@ app.layout = html.Div([dbc.Navbar([
                         {'label': u'FFO/OCF', 'value': 'REIT'},
                     ],
                     value='Base'
-                )],style={'color': 'black','width': '120px'}),
-            ]),
+                )], style={'color': 'black', 'width': '120px'}),
+                ]),
         dbc.Col([
                 html.Label('Ticker: '),
-                html.Div([dbc.Input(id="ticker-input", type="text", value='AAPL')],style={'width': '80px'}),
+                html.Div([dbc.Input(id="ticker-input", type="text",
+                                    value='AAPL')], style={'width': '80px'}),
                 ]),
         dbc.Col([
                 dbc.Button("Update", id="update-input", size="lg"),
@@ -98,8 +99,8 @@ app.layout = html.Div([dbc.Navbar([
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink(
                     "ReadMe", active=True, href="https://github.com/tobigs/FunViz", external_link=True)),
-                ], pills=True),
-            ]),
+            ], pills=True),
+        ]),
         dbc.Col([
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink("Sponsor", active=True,
@@ -111,25 +112,33 @@ app.layout = html.Div([dbc.Navbar([
     html.Br(),
     dbc.Row([
         dbc.Col([
+            dbc.Label('      '),
+        ], align="center"),
+        dbc.Col([
             dbc.Label('PE'),
-            html.Div(dbc.Input(id='pe', type="text"))
-        ], width=1.2),
+            html.Div(dbc.Input(id='pe', type="text"), style={'width': 130})
+        ], align="center"),
 
         dbc.Col([
             dbc.Label('Normal PE'),
-            html.Div(dbc.Input(id='pe_norm', type="text"))
-        ], width=1.2),
+            html.Div(dbc.Input(id='pe_norm', type="text"),
+                     style={'width': 130})
+        ], align="center"),
 
         dbc.Col([
             dbc.Label('Growth Rate'),
-            html.Div(dbc.Input(id='grw', type="text"))
-        ], width=1.2),
+            html.Div(dbc.Input(id='grw', type="text"), style={'width': 130})
+        ], align="center"),
 
         dbc.Col([
             dbc.Label('exp. Growth Rate'),
-            html.Div(dbc.Input(id='grw_exp', type="text")),
-        ], width=1.2),
-    ], justify="center"),
+            html.Div(dbc.Input(id='grw_exp', type="text"),
+                     style={'width': 130}),
+        ], align="center"),
+        dbc.Col([
+            dbc.Label('      '),
+        ], align="center"),
+    ], align="center"),
     html.Div(dbc.Alert(
         "Couldn't find any stocks matching your request or symbol is not supported. Use finance.yahoo.com to check symbol.",
         id="alert",
@@ -177,7 +186,7 @@ app.layout = html.Div([dbc.Navbar([
 def update_graph_output(n_clicks, symbol, country, style):
     try:
         figure, pe, pe_norm, grw, grw_exp = strg.update(country, symbol, style)
-        print("success")
+        print("Success.")
         print(pe, pe_norm, grw, grw_exp)
         return figure, str(pe), str(pe_norm), str(grw), str(grw_exp), False
     except Exception as ex:
