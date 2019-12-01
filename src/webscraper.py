@@ -8,6 +8,9 @@
 #TODO: improve column selection
 #TODO: BUGFIX DDD,KHC,PCG,PDD, TEAM
 #TODO: Improve REIT functions
+
+from data_processing import data_processing
+
 from bs4 import BeautifulSoup
 import os
 import subprocess
@@ -214,8 +217,11 @@ def req_handle(country, symbol, style):
 
     currency_conv(df_daily, df_yearly, df_est, yahoo_currency,
                   est_currency, morn_currency, end, country)
-
+    processing_request = [df_daily, df_yearly,
+                          df_est, "PDD", "Base", morn_currency]
+    trace1, pe, pe_norm, grw, grw_exp = data_processing(
+        *processing_request)
     return(df_daily, df_yearly, df_est, morn_currency)
 
 if __name__ == "__main__":
-    req_handle("USA","AAPL","Base")
+    req_handle("USA","KHC","Base")
