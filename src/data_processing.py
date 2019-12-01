@@ -94,11 +94,12 @@ def likely_deprecated(df_est):
 
 def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt, style, currency, symbol, col_dict, e_multiple):
     #TODO: Improve this function
-    trace1 = go.Figure()
+    trace_base = go.Figure()
+    trace_ratio = go.Figure()
+    traces = [trace_base, trace_ratio]
     try:
         cut = (len(e_total_index_dt)-len(e_total))
         xlabel = gen_xlabel(df_yearly, df_est)
-        trace1.layout.title = symbol.upper()
         ranger = {"x": [], "y": []}
         hvrtxt = {"div": [], "eps": [], "pe_norm": [],
                 "ocf": [], "price": [], "pe": []}
@@ -129,7 +130,7 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
         ranger["x"].append(df_yearly.index.max())
         ranger["y"].append(df_yearly[col_dict["ocf"]].min())
         ranger["y"].append(df_yearly[col_dict["ocf"]].max())
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=df_yearly.index,
             y=df_yearly[col_dict["ocf"]],
             name="OCF/FFO",
@@ -145,7 +146,7 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
             line=dict(color='grey', width=4),
             fill='tozeroy',
             fillcolor='rgb(55,91,187)'))
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=df_yearly.index,
             y=df_yearly[col_dict["div"]],
             name="Dividend",
@@ -156,41 +157,22 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
                 size=8),
             line=dict(color='yellow', width=3),
             opacity=0.8))
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=df_daily.index,
             y=df_daily["Close"],
             hoverinfo="x+text+name",
             hovertext=hvrtxt["price"],
             name="Price",
             line_color='white'))
-        trace1.layout.xaxis.range = [ranger["x"][0], df_daily.index.max()]
+        trace_base.layout.xaxis.range = [ranger["x"][0], df_daily.index.max()]
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
             lambda x: x*(1/15))
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
             lambda x: x*(1/15))
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]] * \
             df_yearly[col_dict["shrs"]]
-
-    elif style == "PE-Plot":
-        ranger["x"].append(df_daily.index.min())
-        ranger["x"].append(df_daily.index.max())
-        ranger["y"].append(df_daily["blended_pe"].min())
-        ranger["y"].append(df_daily["blended_pe"].max())
-        trace1.add_trace(go.Scatter(
-            x=df_daily.index,
-            y=df_daily["blended_pe"],
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["pe"],
-            line_color='orange',
-            name="PE"))
-        maxvar = 100.0
-        minvar = 0.1
-        if df_daily["blended_pe"].max() < maxvar:
-            maxvar = df_daily["blended_pe"].max()
-        if df_daily["blended_pe"].min() > minvar:
-            minvar = df_daily["blended_pe"].min()-1
     else:
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=pd.to_datetime(e_total_index_dt),
             y=e_total,
             name="EPS",
@@ -207,7 +189,7 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
             fill='tozeroy',
             fillcolor='rgb(55,91,187)'))
 
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=pd.to_datetime(e_total_index_dt),
             y=e_total_norm,
             name="Normal PE",
@@ -221,7 +203,7 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
         try:
             df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
                 lambda x: x*e_multiple)
-            trace1.add_trace(go.Scatter(
+            trace_base.add_trace(go.Scatter(
                 x=pd.to_datetime(df_yearly.index),
                 y=df_yearly[col_dict["div"]],
                 name="Dividend",
@@ -236,7 +218,7 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
                 lambda x: x*(1/e_multiple))
         except Exception as ex:
             print(ex)
-        trace1.add_trace(go.Scatter(
+        trace_base.add_trace(go.Scatter(
             x=(df_daily.index),
             y=df_daily["Close"],
             hoverinfo="x+text+name",
@@ -249,52 +231,71 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
             ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
             ranger["y"].append((e_total.min()))
             ranger["y"].append((e_total.max()))
-            trace1.layout.xaxis.range = [ranger["x"][0], ranger["x"][1]]
+            trace_base.layout.xaxis.range = [ranger["x"][0], ranger["x"][1]]
         except Exception as ex:
             print("Couldn't set x Limits.")
+    try:
+        ranger["x"].append(df_daily.index.min())
+        ranger["x"].append(df_daily.index.max())
+        ranger["y"].append(df_daily["blended_pe"].min())
+        ranger["y"].append(df_daily["blended_pe"].max())
+        trace_ratio.add_trace(go.Scatter(
+            x=df_daily.index,
+            y=df_daily["blended_pe"],
+            hoverinfo="x+text+name",
+            hovertext=hvrtxt["pe"],
+            line_color='orange',
+            name="PE"))
+        maxvar = 100.0
+        minvar = 0.1
+        if df_daily["blended_pe"].max() < maxvar:
+            maxvar = df_daily["blended_pe"].max()
+        if df_daily["blended_pe"].min() > minvar:
+            minvar = df_daily["blended_pe"].min()-1
+        trace_ratio.update_yaxes(title_text="PE")
+        print(minvar, maxvar)
+        trace_ratio.layout.yaxis.range = [minvar, maxvar]
+    except Exception as ex:
+        print("Ratio-Plot failed: " + str(ex))
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
         lambda x: x*(1/e_multiple))
     df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
 
     #TODO: Put in layout
-    trace1.layout.template = 'plotly_dark'
-    trace1.layout.plot_bgcolor = 'rgb(35,35,35)'
-    trace1.layout.paper_bgcolor = 'rgb(35,35,35)'
-    #trace1.layout.xaxis=dict(showgrid=False)
-    #trace1.layout.yaxis=dict(showgrid=False)
+    for x in traces:
+        x.layout.template = 'plotly_dark'
+        x.layout.plot_bgcolor = 'rgb(35,35,35)'
+        x.layout.paper_bgcolor = 'rgb(35,35,35)'
+    #trace_base.layout.xaxis=dict(showgrid=False)
+    #trace_base.layout.yaxis=dict(showgrid=False)
     try:
-        trace1.layout.xaxis.nticks = len(e_total_index_dt)
-        trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
+        trace_base.layout.xaxis.nticks = len(e_total_index_dt)
+        trace_base.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
     except Exception as ex:
         print("Couldn't modify ticks: " +  str(ex))
 
-    trace1.layout.height = 575
-    if style == "PE-Plot":
-        trace1.update_yaxes(title_text="PE")
-    else:
-        trace1.update_yaxes(title_text=currency)
-    #trace1.layout.xaxis.mirror=True
-    #trace1.layout.xaxis.ticks='outside'
-    trace1.layout.yaxis.showline = True
-    trace1.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
-    trace1.layout.xaxis.gridcolor = "rgb(35,35,35)"
-    trace1.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
-    trace1.layout.xaxis.linecolor = "rgb(35,35,35)"
-    trace1.layout.yaxis.linecolor = "rgb(35,35,35)"
-    trace1.layout.yaxis.gridcolor = "rgb(35,35,35)"
-    if style == "PE-Plot":
-        print(minvar, maxvar)
-        trace1.layout.yaxis.range = [minvar, maxvar]
-    else:
-        trace1.layout.yaxis.autorange = True
-        trace1.layout.yaxis.rangemode = 'nonnegative'
+    for x in traces:
+        x.layout.title = symbol.upper()
+        x.layout.height = 575
+        x.layout.yaxis.showline = True
+        x.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
+        x.layout.xaxis.gridcolor = "rgb(35,35,35)"
+        x.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
+        x.layout.xaxis.linecolor = "rgb(35,35,35)"
+        x.layout.yaxis.linecolor = "rgb(35,35,35)"
+        x.layout.yaxis.gridcolor = "rgb(35,35,35)"
+
+    #trace_base.layout.xaxis.mirror=True
+    #trace_base.layout.xaxis.ticks='outside'
     #tickmode = 'array',
     #tickvals = pd.to_datetime(e_total_index_dt),
     #ticktext =  xlabel
+    trace_base.update_yaxes(title_text=currency)
+    trace_base.layout.yaxis.autorange = True
+    trace_base.layout.yaxis.rangemode = 'nonnegative'
 
-    return trace1, ranger
-
+    return trace_base, trace_ratio
 
 def data_processing(df_daily, df_yearly, df_est, symbol, style, currency):
     earnings_col = df_yearly.filter(like='Earn').columns[0]
@@ -358,7 +359,7 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency):
 
     #TODO: gen_plt better not as function?
     try:
-        trace1, range = gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm,
+        trace_base, trace_ratio = gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm,
                                 e_total_index_dt, style, currency, symbol, col_dict, e_multiple)
     except Exception as ex:
         print("Plot generation failed:" + str(ex))
@@ -380,5 +381,5 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency):
     print(current_pe, normal_multiple, grw, grw_exp)
     #str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %"
 
-    return trace1, current_pe, normal_multiple, grw, grw_exp
+    return trace_base, trace_ratio, current_pe, normal_multiple, grw, grw_exp
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)

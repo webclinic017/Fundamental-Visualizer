@@ -9,8 +9,6 @@
 #TODO: BUGFIX DDD,KHC,PCG,PDD, TEAM
 #TODO: Improve REIT functions
 
-from data_processing import data_processing
-
 from bs4 import BeautifulSoup
 import os
 import subprocess
@@ -185,15 +183,16 @@ def gen_symbol(symbol, country):
     return symbol_morn, symbol_yhoo
 
 
-def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, currency, end, country):
-    start = end - datetime.timedelta(days=7)
+def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, currency, start, end, country):
+    #start = end - datetime.timedelta(days=7)
     if yahoo_currency != None and yahoo_currency != currency:
         print("Price data conversion form " +
               yahoo_currency + " to " + currency + ".")
         forex = yf.download(str(yahoo_currency) +
                             str(currency) + "=X", start=start, end=end)
-        df_daily["Close"] = df_daily["Close"].apply(
-            lambda x: x*forex["Close"].iloc[-1])
+        #df_daily["Close"] = df_daily["Close"].apply(
+        #    lambda x: x*forex["Close"].iloc[-1])
+        df_daily["Close"] = df_daily["Close"] * forex["Close"]
     if est_currency != None and len(est_currency) > 2 and est_currency != currency:
         print("Estimate data conversion form " +
               est_currency + " to " + currency + ".")
@@ -216,12 +215,14 @@ def req_handle(country, symbol, style):
     df_daily, yahoo_currency = yahoo_data(symbol_yhoo, start, end)
 
     currency_conv(df_daily, df_yearly, df_est, yahoo_currency,
-                  est_currency, morn_currency, end, country)
-    processing_request = [df_daily, df_yearly,
-                          df_est, "PDD", "Base", morn_currency]
-    trace1, pe, pe_norm, grw, grw_exp = data_processing(
-        *processing_request)
+                  est_currency, morn_currency, start, end, country)
     return(df_daily, df_yearly, df_est, morn_currency)
 
 if __name__ == "__main__":
-    req_handle("USA","KHC","Base")
+    req_handle("USA", "KHC", "Base")
+    if False:
+        #from data_processing import data_processing
+        processing_request = [df_daily, df_yearly,
+                              df_est, "PDD", "Base", morn_currency]
+        trace1, pe, pe_norm, grw, grw_exp = data_processing(
+            *processing_request)
