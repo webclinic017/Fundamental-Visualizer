@@ -43,12 +43,45 @@ app.title = "FunViz"
 
 app.layout = html.Div([
     dbc.Row([
-            dbc.Label('      '),
-            ], style={'background-color': 'rgb(50,50,50)'}),
+        dbc.Col([
+        html.Img(src=PLOTLY_LOGO, height="90px"),
+        ]),
+        dbc.Col([
+        html.H2("FunViz"), html.Div(html.Label(
+                "Fundamentals Visualizer"), style={'font-size': 13}),
+        ]),
+        dbc.Col([
+            dbc.Label('PE'),
+            html.Div(dbc.Input(id='pe', type="text"),
+                     style={'width': '100px'}),
+        ]),
+        dbc.Col([
+            dbc.Label('Normal PE'),
+            html.Div(dbc.Input(id='pe_norm', type="text"),
+                     style={'width': '100px'}),
+        ]),
+        dbc.Col([
+            dbc.Label('Growth Rate'),
+            html.Div(dbc.Input(id='grw', type="text"),
+                     style={'width': '100px'}),
+        ]),
+        dbc.Col([
+            dbc.Label('exp. Growth Rate'),
+            html.Div(dbc.Input(id='grw_exp', type="text"),
+                     style={'width': '100px'}),
+        ]),
+    ],justify="center", style={'background-color': 'rgb(50,50,50)'}),
     dbc.Row([
-        dbc.Col([html.Img(src=PLOTLY_LOGO, height="90px")],width="auto"),
-        dbc.Col([html.H2("FunViz"), html.Div(html.Label(
-            "Fundamentals Visualizer"), style={'font-size': 13})], width="auto"),
+        dbc.Alert(
+            "Couldn't find any stocks matching your request or symbol is not supported. Use finance.yahoo.com to check symbol.",
+            id="alert",
+            dismissable=True,
+            fade=True,
+            color="warning",
+            is_open=False,
+        ),
+    ]),
+    dbc.Row([
         dbc.Col([
             html.Label('Country: '),
             html.Div([dcc.Dropdown(id='country-input',
@@ -91,8 +124,6 @@ app.layout = html.Div([
                                    ],
                                    value='USA'
                                    )],  style={'color': 'black', 'width': '150px', 'height': '40px'}),
-        ], width="auto"),
-        dbc.Col([
             html.Label('Style: '),
             html.Div([dcc.Dropdown(
                 id='style-input',
@@ -104,71 +135,28 @@ app.layout = html.Div([
                     {'label': u'FFO/OCF', 'value': 'REIT'},
                 ],
                 value='Base'
-            )], style={'color': 'black', 'width': '120px','height':'40px'}),
-        ], width="auto"),
-        dbc.Col([
+            )], style={'color': 'black', 'width': '120px', 'height': '40px'}),
             html.Label('Ticker: '),
             html.Div([dbc.Input(id="ticker-input", type="text",
                                 value='AAPL')], style={'width': '100px', 'height': '40px'}),
-        ], width="auto"),
-        dbc.Col([
             dbc.Button("Update", id="update-input", size="lg"),
-        ], width="auto"),
-        dbc.Col([
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink(
                     "ReadMe", active=True, href="https://github.com/tobigs/FunViz", external_link=True)),
             ], pills=True),
-        ], width="auto"),
-        dbc.Col([
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink("Sponsor", active=True,
                                         href="http://paypal.me/tobigsIO")),
             ], pills=True),
-        ],width="auto"),
-    ], justify="around", align="center", style={'background-color': 'rgb(50,50,50)'}
-    ),
-    dbc.Row([
-        dbc.Label('      '),
-    ], style={'background-color': 'rgb(50,50,50)'}),
-    dbc.Row([
-            dbc.Label('      '),
-    ]),
-    dbc.Row([
-        dbc.Col([
-            dbc.Label('PE'),
-            html.Div(dbc.Input(id='pe', type="text"), style={'width':'100px'})
-        ], width="auto"),
 
+        ], style={'background-color': 'rgb(50,50,50)'}, width="auto"),
         dbc.Col([
-            dbc.Label('Normal PE'),
-            html.Div(dbc.Input(id='pe_norm', type="text"),style={'width': '100px'})
+            dcc.Graph(id='graph-base', figure=init_fig),
         ], width="auto"),
-
         dbc.Col([
-            dbc.Label('Growth Rate'),
-            html.Div(dbc.Input(id='grw', type="text"),style={'width': '100px'})
-        ], width="auto"),
-
-        dbc.Col([
-            dbc.Label('exp. Growth Rate'),
-            html.Div(dbc.Input(id='grw_exp', type="text"),style={'width': '100px'}),
-        ], width="auto"),
-    ], justify="center", align="center"),
-    dbc.Row([
-            dbc.Label('      '),
-            ]),
-    dbc.Row([dbc.Alert(
-        "Couldn't find any stocks matching your request or symbol is not supported. Use finance.yahoo.com to check symbol.",
-        id="alert",
-        dismissable=True,
-        fade=True,
-        color="warning",
-        is_open=False,
-    )], justify="center"),
-    dcc.Graph(id='graph-base', figure=init_fig),
-    dcc.Graph(id='graph-ratio', figure=init_fig),
-
+            dcc.Graph(id='graph-ratio', figure=init_fig), 
+        ], width="auto")
+    ], justify="start", align="start"),
 ])
 
 @app.callback([
