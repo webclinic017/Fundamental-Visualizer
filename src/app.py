@@ -190,7 +190,7 @@ def update_graph_output(n_clicks, symbol, country, style):
         print(pe, pe_norm, grw, grw_exp)
         return figure, str(pe), str(pe_norm), str(grw), str(grw_exp), False
     except Exception as ex:
-        print("Failure:", ex)
+        print("Main App Failure:", ex)
         return init_fig, None, None, None, None, True
     print("debug-print")
     figure, pe, pe_norm, grw, grw_exp = strg.update(country, symbol, style)

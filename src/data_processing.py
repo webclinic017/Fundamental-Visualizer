@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 
 
 def pe_calc(df_daily, e_total_index_dt, e_total, grw_exp, style):
+    e_multiple = 15
     df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype(
         'datetime64[D]').astype(int), e_total_index_dt, e_total)
     df_daily["blended_pe"] = df_daily["Close"]/df_daily["blended_earnings"]
@@ -18,19 +19,24 @@ def pe_calc(df_daily, e_total_index_dt, e_total, grw_exp, style):
 
     if style == "PE15":
         e_multiple = 15.0
-    elif style == "Base":
-        if e_multiple < 15.0:
-            e_multiple = 15.0
-    elif style == "PEG85":
-        if e_multiple < 0:
-            e_multiple = 8.5
-        else:
-            e_multiple = e_multiple + 8.5
+    elif e_multiple != None and not pd.isnull(e_multiple):
+        if style == "Base":
+            if e_multiple < 15.0:
+                e_multiple = 15.0
+        elif style == "PEG85":
+            if e_multiple < 0:
+                e_multiple = 8.5
+            else:
+                e_multiple = e_multiple + 8.5
+    else:
+        e_multiple = 15
 
     return e_multiple, normal_multiple, current_pe
 
 
 def grw_calc(e_total):
+    grw = 0
+    grw_exp = 0
     for i, item in enumerate(e_total):
         if item > 0:
             grw_start = i
@@ -48,9 +54,16 @@ def grw_calc(e_total):
             grw_exp = (((e_total[-1]/e_total[-2])**(1/1))-1)*100
         else:
             # TODO: improve grw_exp
-            grw_exp = (((e_total[-1]/e_total[-3])**(1/2))-1)*100
-        grw = (((e_total[-1]/e_total[i])**(1/num_years))-1) * \
-            100  # (start/end)^(1/periods)-1
+            if e_total[-3]<0:
+                 grw_exp = (((e_total[-1]/e_total[-2])**(1/1))-1)*100
+            else:
+                grw_exp = (((e_total[-1]/e_total[-3])**(1/2))-1)*100
+        if num_years == 0:
+            grw = None
+            grw_exp = None
+        else:
+            grw = (((e_total[-1]/e_total[i])**(1/num_years))-1) * \
+                100  # (start/end)^(1/periods)-1
     else:
         grw = 0
         grw_exp = 0
@@ -81,25 +94,28 @@ def likely_deprecated(df_est):
 
 def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt, style, currency, symbol, col_dict, e_multiple):
     #TODO: Improve this function
-    cut = (len(e_total_index_dt)-len(e_total))
-    xlabel = gen_xlabel(df_yearly, df_est)
     trace1 = go.Figure()
-    trace1.layout.title = symbol.upper()
-    ranger = {"x": [], "y": []}
-    hvrtxt = {"div": [], "eps": [], "pe_norm": [],
-              "ocf": [], "price": [], "pe": []}
-    for x in df_daily["Close"]:
-        hvrtxt["price"].append(round(x, 2))
-    for x in df_daily["blended_pe"]:
-        hvrtxt["pe"].append(round(x, 2))
-    for x in df_yearly[col_dict["div"]]:
-        hvrtxt["div"].append(x)
-    for x in e_total:
-        hvrtxt["eps"].append(round(x/e_multiple, 2))
-    for x in e_total_norm:
-        hvrtxt["pe_norm"].append(
-            "Price @ Normal Multiple: " + str(round(x, 2)))
-    print("Created Hovertext.")
+    try:
+        cut = (len(e_total_index_dt)-len(e_total))
+        xlabel = gen_xlabel(df_yearly, df_est)
+        trace1.layout.title = symbol.upper()
+        ranger = {"x": [], "y": []}
+        hvrtxt = {"div": [], "eps": [], "pe_norm": [],
+                "ocf": [], "price": [], "pe": []}
+        for x in df_daily["Close"]:
+            hvrtxt["price"].append(round(x, 2))
+        for x in df_daily["blended_pe"]:
+            hvrtxt["pe"].append(round(x, 2))
+        for x in df_yearly[col_dict["div"]]:
+            hvrtxt["div"].append(x)
+        for x in e_total:
+            hvrtxt["eps"].append(round(x/e_multiple, 2))
+        for x in e_total_norm:
+            hvrtxt["pe_norm"].append(
+                "Price @ Normal Multiple: " + str(round(x, 2)))
+        print("Created Hovertext.")
+    except Exception as ex:
+        print("Failed to generate Hovertext: " + str(ex))
     if style == "REIT":
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
             lambda x: x*15)
@@ -174,10 +190,6 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
         if df_daily["blended_pe"].min() > minvar:
             minvar = df_daily["blended_pe"].min()-1
     else:
-        ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
-        ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
-        ranger["y"].append((e_total.min()))
-        ranger["y"].append((e_total.max()))
         trace1.add_trace(go.Scatter(
             x=pd.to_datetime(e_total_index_dt),
             y=e_total,
@@ -232,7 +244,14 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
             name="Price",
             line_color='white'))
         print("Added data to plot.")
-        trace1.layout.xaxis.range = [ranger["x"][0], ranger["x"][1]]
+        try:
+            ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
+            ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
+            ranger["y"].append((e_total.min()))
+            ranger["y"].append((e_total.max()))
+            trace1.layout.xaxis.range = [ranger["x"][0], ranger["x"][1]]
+        except Exception as ex:
+            print("Couldn't set x Limits.")
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
         lambda x: x*(1/e_multiple))
@@ -244,8 +263,12 @@ def gen_plt(df_yearly, df_daily, df_est, e_total, e_total_norm, e_total_index_dt
     trace1.layout.paper_bgcolor = 'rgb(35,35,35)'
     #trace1.layout.xaxis=dict(showgrid=False)
     #trace1.layout.yaxis=dict(showgrid=False)
-    trace1.layout.xaxis.nticks = len(e_total_index_dt)
-    trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
+    try:
+        trace1.layout.xaxis.nticks = len(e_total_index_dt)
+        trace1.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
+    except Exception as ex:
+        print("Couldn't modify ticks: " +  str(ex))
+
     trace1.layout.height = 575
     if style == "PE-Plot":
         trace1.update_yaxes(title_text="PE")
@@ -315,7 +338,9 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency):
         e_multiple, normal_multiple, current_pe = pe_calc(
             df_daily, e_total_index_int, e_total, grw_exp, style)
     except Exception as ex:
-        print("Growth/PE Calc failed:" + str(ex))
+        grw, grw_exp = [0,0]
+        e_multiple, normal_multiple, current_pe = [15,None,None]
+        print("Growth/PE Calc failed: " + str(ex))
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
         lambda x: x*e_multiple)
@@ -337,6 +362,23 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency):
                                 e_total_index_dt, style, currency, symbol, col_dict, e_multiple)
     except Exception as ex:
         print("Plot generation failed:" + str(ex))
+    
+    try:
+        round_lst = [current_pe, normal_multiple, grw, grw_exp]
+        for i, x in enumerate(round_lst):
+            if x != None:
+                round_lst[i] = str(round(x, 2))
+        current_pe, normal_multiple, grw, grw_exp = round_lst
+    except Exception as ex:
+        print("Exception: " + str(ex))
+    
+    
+    try:
+        grw, grw_exp = grw + " %", grw_exp + " %"
+    except Exception as ex:
+        print("Probably no earnings: " + str(ex))
+    print(current_pe, normal_multiple, grw, grw_exp)
+    #str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %"
 
-    return trace1, str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %")
+    return trace1, current_pe, normal_multiple, grw, grw_exp
     #return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
