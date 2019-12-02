@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # TODO: function for reverting dataframes after multiplication with e_multiple
 # TODO: add decile to yield plot
-# TODO: Try if style==REIT set earnings_col = ocf_col
+# TODO: add normal ofc-multiple and ocf-growth rate to REIT (Try if style==REIT set earnings_col = ocf_col)
+# TODO: Modularize gen_plt, pe_calc
+# TODO: add handler for irregular forcasting data (2018,2019,2021)
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go

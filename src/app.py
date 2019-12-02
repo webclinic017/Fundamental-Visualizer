@@ -12,7 +12,7 @@ import pandas as pd
 import datetime
 # TODO: Add ratio yield switch
 # TODO: Add enterprise value
-# add data table
+# TODO: add data table
 
 
 class Storage:
