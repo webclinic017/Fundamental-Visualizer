@@ -168,7 +168,6 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
             hvrtxt["eps"].append(
                 "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
         for i, x in enumerate(e_total_norm):
-            print(year_end[i],x)
             hvrtxt["pe_norm"].append(
                 "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
     except Exception as ex:
@@ -346,22 +345,22 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         trace_ratio.add_trace(go.Scatter(
             x=df_daily.index,
             y=df_daily["e_yield"],
-            line_color='SteelBlue ',
+            line=dict(color='SteelBlue', width=1.5),
             name="Earnings"))
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["ocf_yield"],
-            line_color='rgba(220, 20, 60,0.8)',
+            line=dict(color='rgba(220, 20, 60,0.8)', width=1.5),
             name="OCF")),
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["fcf_yield"],
-            line_color='rgba(50, 205, 50, 0.8)',
+            line=dict(color='rgba(50, 205, 50, 0.8)', width=1.5),
             name="FCF"))
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
-            y=df_yield["div_yield"],
-            line_color='rgba(255, 255, 0,0.8)',
+            y=df_yield["div_yield"],#
+            line=dict(color='rgba(255, 255, 0,0.8)', width=1.5),
             name="Dividend")),
         maxvar = 1.0
         minvar = 0.0
@@ -424,7 +423,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     trace_base.layout.yaxis.rangemode = 'nonnegative'
     trace_base.layout.yaxis.zerolinecolor = "rgb(250,250,250)"
 
-    trace_ratio.layout.yaxis.tickformat = ',.0%'
+    trace_ratio.layout.yaxis.tickformat = ',.1%'
     trace_ratio.update_yaxes(hoverformat=",.2%")
 
     return trace_base, trace_ratio
@@ -521,7 +520,6 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
         grw, grw_exp = grw + " %", grw_exp + " %"
     except Exception as ex:
         print("Probably no earnings: " + str(ex))
-    print(current_pe, normal_multiple, grw, grw_exp)
     # str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %"
 
     return trace_base, trace_ratio, current_pe, normal_multiple, grw, grw_exp
