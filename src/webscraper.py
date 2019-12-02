@@ -58,7 +58,7 @@ def morningstar_data(symbol_morn):
             continue
         if len(row_data) < 12:
             row_data = ['Year'] + row_data
-        for j, td in enumerate(row_data):
+        for td in row_data:
             data.append(td)
 
     for index, x in enumerate(data, 0):

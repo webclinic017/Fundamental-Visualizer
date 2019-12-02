@@ -30,7 +30,7 @@ def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw
 
         # Required because of forecasting data
         while len(year_end_vals) < 12:
-            year_end_vals.append(year_end_vals[-1])
+            year_end_vals.append(df_daily["Close"][-1])
 
         df_yield = pd.DataFrame(index=df_daily.index[:delta])
 
@@ -149,8 +149,8 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     trace_ratio = go.Figure()
     traces = [trace_base, trace_ratio]
     try:
-        cut = (len(e_total_index_dt)-len(e_total))
-        xlabel = gen_xlabel(df_yearly, df_est)
+        #cut = (len(e_total_index_dt)-len(e_total))
+        #xlabel = gen_xlabel(df_yearly, df_est)
         ranger = {"x": [], "y": []}
         hvrtxt = {"div": [], "eps": [], "pe_norm": [],
                   "ocf": [], "price": [], "pe": []}
@@ -166,10 +166,11 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     try:
         for i, x in enumerate(e_total):
             hvrtxt["eps"].append(
-                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round((year_end[i]/x-1)*100, 2)) + "%")
-        for x in e_total_norm:
+                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
+        for i, x in enumerate(e_total_norm):
+            print(year_end[i],x)
             hvrtxt["pe_norm"].append(
-                "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round((year_end[i]/x-1)*100, 2)) + "%")
+                "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
     except Exception as ex:
         print("Hovertext w/ year_end failed: " + str(ex))
         for i, x in enumerate(e_total):
@@ -350,17 +351,17 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["ocf_yield"],
-            line_color='coral',
+            line_color='rgba(220, 20, 60,0.8)',
             name="OCF")),
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["fcf_yield"],
-            line_color='orange',
+            line_color='rgba(50, 205, 50, 0.8)',
             name="FCF"))
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["div_yield"],
-            line_color='yellow',
+            line_color='rgba(255, 255, 0,0.8)',
             name="Dividend")),
         maxvar = 1.0
         minvar = 0.0
@@ -406,9 +407,9 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     for x in traces:
         x.layout.height = 575
         x.layout.yaxis.showline = True
-        x.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
+        x.layout.xaxis.zerolinecolor = "rgb(35,35,35)"
         x.layout.xaxis.gridcolor = "rgb(35,35,35)"
-        x.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
+        x.layout.yaxis.zerolinecolor = "rgb(35,35,35)"
         x.layout.xaxis.linecolor = "rgb(35,35,35)"
         x.layout.yaxis.linecolor = "rgb(35,35,35)"
         x.layout.yaxis.gridcolor = "rgb(35,35,35)"
@@ -421,6 +422,8 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     trace_base.update_yaxes(title_text=currency)
     trace_base.layout.yaxis.autorange = True
     trace_base.layout.yaxis.rangemode = 'nonnegative'
+    trace_base.layout.yaxis.zerolinecolor = "rgb(250,250,250)"
+
     trace_ratio.layout.yaxis.tickformat = ',.0%'
     trace_ratio.update_yaxes(hoverformat=",.2%")
 
