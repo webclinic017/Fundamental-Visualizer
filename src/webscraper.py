@@ -1,15 +1,7 @@
 #!/usr/bin/env python
-#TODO: Clean this mess (Classes and functions)
-#TODO: Labels
-#TODO: Improve README, add how to use
-#TODO: Fix pegc calc
-#TODO: Store data and request other graph, same symbol
-#TODO: b-shares handler
-#TODO: improve column selection
-#TODO: BUGFIX DDD,KHC,PCG,PDD, TEAM
-#TODO: Improve REIT functions
-
-from data_processing import data_processing
+# TODO: Improve README
+# TODO: b-shares handler
+# TODO: Improve REIT functions add normal multiple
 
 from bs4 import BeautifulSoup
 import os
@@ -23,6 +15,7 @@ import yfinance as yf
 import wget
 
 web = False
+
 
 def yahoo_data(symbol_yhoo, start, end):
     stock = yf.Ticker(symbol_yhoo)
@@ -39,17 +32,17 @@ def yahoo_data(symbol_yhoo, start, end):
 
 
 def morningstar_data(symbol_morn):
-    #TODO: add handler for no returned data
+    # TODO: add handler for no returned data
     mylink = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(
         symbol_morn)
     #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
-    
+
     if web:
         subprocess.check_call(["wget",  '-O', 'data.txt', '-S', mylink])
     else:
         print("Local WGET")
         os.remove("data.txt")
-        wget.download(mylink,"data.txt")
+        wget.download(mylink, "data.txt")
 
     f = open('data.txt', 'r')
     obj = re.findall(r'xxx\((.*)\)', f.read())[0]
@@ -73,9 +66,9 @@ def morningstar_data(symbol_morn):
 
     if web:
         x = [data[0], data[12], data[24], data[36], data[48], data[60], data[72], data[84],
-                 data[96], data[108], data[120], data[132], data[144], data[156], data[168], data[180]]
+             data[96], data[108], data[120], data[132], data[144], data[156], data[168], data[180]]
         arr = [data[1:12], data[13:24], data[25:36], data[37:48], data[49:60], data[61:72],  data[73:84], data[85:96],
-            data[97:108], data[109:120], data[121:132], data[133:144], data[145:156], data[157:168], data[169:180],  data[181:192]]
+               data[97:108], data[109:120], data[121:132], data[133:144], data[145:156], data[157:168], data[169:180],  data[181:192]]
         index = data[1:12]
         df_yearly = pd.DataFrame(columns=x)
         i = 0
@@ -92,8 +85,10 @@ def morningstar_data(symbol_morn):
         return df_yearly, morn_currency
     else:
         print("Local DF_GEN")
-        arr = np.array([data[1:12], data[12:23], data[24:35], data[36:47], data[48:59], data[60:71],  data[72:83], data[84:95], data[96:107], data[108:119], data[120:131], data[132:143], data[144:155], data[156:167], data[168:179],  data[180:191]])
-        df_yearly = pd.DataFrame(arr.T,columns=[data[0],data[23], data[35], data[47], data[59], data[71], data[83], data[95], data[107], data[119], data[131], data[143], data[155], data[167], data[179], data[191]])
+        arr = np.array([data[1:12], data[12:23], data[24:35], data[36:47], data[48:59], data[60:71],  data[72:83], data[84:95],
+                        data[96:107], data[108:119], data[120:131], data[132:143], data[144:155], data[156:167], data[168:179],  data[180:191]])
+        df_yearly = pd.DataFrame(arr.T, columns=[data[0], data[23], data[35], data[47], data[59], data[71], data[83],
+                                                 data[95], data[107], data[119], data[131], data[143], data[155], data[167], data[179], data[191]])
         df_yearly.drop([10], inplace=True)
         df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
         df_yearly.columns = df_yearly.columns.str.strip()
@@ -133,35 +128,6 @@ def morningstar_data_est(symbol_morn):
     return df_est, est_currency
 
 
-def pegc():
-    #TODO: implement this
-    '''
-    elif style == "PEGC":
-        i = 0
-        print("Growth Rate", "Year")
-        for x in range(1, len(e_total)):
-            gnumbers = ((e_total[x] - e_total[x-1]) / e_total[x-1] * 100)
-            if e_total[x-1] < 0:
-                print(-gnumbers, i, e_total[x-1], e_total[x])
-            else:
-                print(gnumbers, i, e_total[x-1], e_total[x])
-            i=i+1
-        s = int(input("Type Year to start multiple calculation:"))
-        multiple = ((e_total[-1]/e_total.item(s))) #**(1.0/(len(e_total)-s))-1.0)*100.0
-        if multiple < 0:
-            print("Growth Rate: " + str(print(-100*((abs(multiple))**(1.0/(len(e_total)-s))-1.0))) + "%")
-            multiple = 15
-        else:
-            multiple = 100*(multiple**(1.0/(len(e_total)-s))-1.0)
-            print(multiple)
-            if multiple < 15:
-                multiple = 15
-                print("Growth Rate < 15%")
-            else:
-                print("Growth Rate: " + str(multiple) + "%")
-    '''
-
-
 def gen_symbol(symbol, country):
     symbol = symbol.upper()
     df_exchange = pd.DataFrame(index=["Germany", "Hongkong", "Japan", "France", "Canada", "UK", "Switzerland", "Australia",
@@ -185,15 +151,16 @@ def gen_symbol(symbol, country):
     return symbol_morn, symbol_yhoo
 
 
-def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, currency, end, country):
-    start = end - datetime.timedelta(days=7)
+def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, currency, start, end, country):
+    #start = end - datetime.timedelta(days=7)
     if yahoo_currency != None and yahoo_currency != currency:
         print("Price data conversion form " +
               yahoo_currency + " to " + currency + ".")
         forex = yf.download(str(yahoo_currency) +
                             str(currency) + "=X", start=start, end=end)
-        df_daily["Close"] = df_daily["Close"].apply(
-            lambda x: x*forex["Close"].iloc[-1])
+        # df_daily["Close"] = df_daily["Close"].apply(
+        #    lambda x: x*forex["Close"].iloc[-1])
+        df_daily["Close"] = df_daily["Close"] * forex["Close"]
     if est_currency != None and len(est_currency) > 2 and est_currency != currency:
         print("Estimate data conversion form " +
               est_currency + " to " + currency + ".")
@@ -206,7 +173,7 @@ def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, cur
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
 
 
-def req_handle(country, symbol, style):
+def req_handle(country, symbol):
     symbol_morn, symbol_yhoo = gen_symbol(symbol, country)
     df_yearly, morn_currency = morningstar_data(symbol_morn)
     df_est, est_currency = morningstar_data_est(symbol_morn)
@@ -216,12 +183,17 @@ def req_handle(country, symbol, style):
     df_daily, yahoo_currency = yahoo_data(symbol_yhoo, start, end)
 
     currency_conv(df_daily, df_yearly, df_est, yahoo_currency,
-                  est_currency, morn_currency, end, country)
-    processing_request = [df_daily, df_yearly,
-                          df_est, "PDD", "Base", morn_currency]
-    trace1, pe, pe_norm, grw, grw_exp = data_processing(
-        *processing_request)
+                  est_currency, morn_currency, start, end, country)
     return(df_daily, df_yearly, df_est, morn_currency)
 
+
 if __name__ == "__main__":
-    req_handle("USA","KHC","Base")
+    req_handle("USA", "KHC", "Base")
+    '''
+    if False:
+        #from data_processing import data_processing
+        processing_request = [df_daily, df_yearly,
+                              df_est, "PDD", "Base", morn_currency]
+        trace1, pe, pe_norm, grw, grw_exp = data_processing(
+            *processing_request)
+    '''
