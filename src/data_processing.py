@@ -351,11 +351,12 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
             x=df_yield.index,
             y=df_yield["ocf_yield"],
             line=dict(color='rgba(220, 20, 60,0.8)', width=1.5),
-            name="OCF")),
+            name="OCF", visible='legendonly',)),
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
             y=df_yield["fcf_yield"],
             line=dict(color='rgba(50, 205, 50, 0.8)', width=1.5),
+            visible='legendonly',
             name="FCF"))
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
@@ -365,7 +366,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         maxvar = 1.0
         minvar = 0.0
         extrema_list = []
-        for x in df_yield.loc[:, 'ocf_yield':].columns:
+        for x in df_yield.loc[:, 'div_yield':].columns:
             if 1 > df_yield[x].max() >= 0:
                 extrema_list.append(df_yield[x].max())
             if 1 > df_yield[x].min() >= 0:
