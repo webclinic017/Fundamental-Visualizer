@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # TODO: function for reverting dataframes after multiplication with e_multiple
 # TODO: add decile to yield plot
-# TODO: add normal ofc-multiple and ocf-growth rate to REIT (Try if style==REIT set earnings_col = ocf_col)
 # TODO: Modularize gen_plt, pe_calc
 # TODO: add handler for irregular forcasting data (2018,2019,2021)
 import pandas as pd
@@ -64,7 +63,12 @@ def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw
 
     #normal_multiple_deprecated = df_daily["e_yield"].mean()
     normal_multiple = df_daily["blended_pe"].agg(lambda x: x[x > 0].median())
-    current_pe = df_daily["blended_pe"].iloc[-1]
+    normal_multiple_ocf = (1/df_yield["ocf_yield"]).agg(
+        lambda x: x[x > 0].median())
+    if style == "REIT":
+        current_pe = (1/(df_yield["ocf_yield"].iloc[-1]))
+    else:
+        current_pe = df_daily["blended_pe"].iloc[-1]
     if exp_switch:
         e_multiple = grw_exp
     else:
@@ -81,10 +85,13 @@ def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw
                 e_multiple = 8.5
             else:
                 e_multiple = e_multiple + 8.5
+        elif style == "REIT":
+            if e_multiple < 15:
+                e_multiple = 15
     else:
         e_multiple = 15
 
-    return e_multiple, normal_multiple, current_pe, df_yield, year_end_vals
+    return e_multiple, normal_multiple, normal_multiple_ocf, current_pe, df_yield, year_end_vals
 
 
 def grw_calc(e_total):
@@ -155,7 +162,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         #xlabel = gen_xlabel(df_yearly, df_est)
         ranger = {"x": [], "y": []}
         hvrtxt = {"div": [], "eps": [], "pe_norm": [],
-                  "ocf": [], "price": [], "pe": []}
+                  "ocf": [], "price": [], "pe": [], "ocf_norm": []}
         for x in df_daily["Close"]:
             hvrtxt["price"].append(round(x, 2))
         for x in df_daily["e_yield"]:
@@ -182,12 +189,24 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
                 "Price @ Normal Multiple: " + str(round(x, 2)))
 
     if style == "REIT":
+        #TODO: Improve naming
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-            lambda x: x*15)
-        for x in df_yearly[col_dict["ocf"]]:
-            hvrtxt["ocf"].append(round(x, 2))
+            lambda x: x*e_multiple)
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-            lambda x: x*15)
+            lambda x: x*e_multiple)
+        try:
+            if 10 > len(df_yearly[col_dict["ocf"]]):
+                print(year_end)
+                year_end = year_end[(10-len(df_yearly[col_dict["ocf"]])):]
+                print(year_end)
+            for i, x in enumerate(df_yearly[col_dict["ocf"]]):
+                hvrtxt["ocf"].append(
+                    "OCF: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
+            for i, x in enumerate(df_yearly["ocf_norm"]):
+                hvrtxt["ocf_norm"].append(
+                    "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
+        except Exception as ex:
+            print("OCF Hovertext w/ year_end failed: " + str(ex))
         ranger["x"].append(df_yearly.index.min())
         ranger["x"].append(df_yearly.index.max())
         ranger["y"].append(df_yearly[col_dict["ocf"]].min())
@@ -195,7 +214,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         trace_base.add_trace(go.Scatter(
             x=df_yearly.index,
             y=df_yearly[col_dict["ocf"]],
-            name="OCF/FFO",
+            name="OCF",
             hoverinfo="x+text+name",
             hovertext=hvrtxt["ocf"],
             marker=dict(
@@ -208,6 +227,17 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
             line=dict(color='grey', width=4),
             fill='tozeroy',
             fillcolor='rgb(55,91,187)'))
+        trace_base.add_trace(go.Scatter(
+            x=df_yearly.index,
+            y=df_yearly["ocf_norm"],
+            name="Normal P/OCF",
+            hoverinfo="x+text+name",
+            hovertext=hvrtxt["ocf_norm"],
+            marker=dict(
+                color='orange',
+                size=8),
+            line=dict(color='orange', width=3),
+            opacity=0.8))
         trace_base.add_trace(go.Scatter(
             x=df_yearly.index,
             y=df_yearly[col_dict["div"]],
@@ -228,9 +258,9 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
             line_color='white'))
         trace_base.layout.xaxis.range = [ranger["x"][0], df_daily.index.max()]
         df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-            lambda x: x*(1/15))
+            lambda x: x*(1/e_multiple))
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-            lambda x: x*(1/15))
+            lambda x: x*(1/e_multiple))
     else:
         trace_base.add_trace(go.Scatter(
             x=pd.to_datetime(e_total_index_dt),
@@ -362,7 +392,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
             name="FCF"))
         trace_ratio.add_trace(go.Scatter(
             x=df_yield.index,
-            y=df_yield["div_yield"],#
+            y=df_yield["div_yield"],
             line=dict(color='rgba(255, 255, 0,0.8)', width=1.5),
             name="Dividend")),
         maxvar = 1.0
@@ -477,21 +507,29 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
     likely_deprecated(df_est)
 
     try:
-        grw, grw_exp = grw_calc(e_total)
+        if style == "REIT":
+             grw, grw_exp = grw_calc(df_yearly[col_dict["ocf"]])
+        else:
+            grw, grw_exp = grw_calc(e_total)
     except Exception as ex:
         grw, grw_exp = [0, 0]
         print("Growth Calc failed: " + str(ex))
     try:
-        e_multiple, normal_multiple, current_pe, df_yield, year_end = pe_calc(
+        e_multiple, normal_multiple, normal_multiple_ocf, current_pe, df_yield, year_end = pe_calc(
             df_daily, df_yearly, e_total_index_int, e_total, grw, exp_switch, grw_exp, style, col_dict)
     except Exception as ex:
-        e_multiple, normal_multiple, current_pe, df_yield, year_end = [
-            15, None, None, None, None]
+        e_multiple, normal_multiple, normal_multiple_ocf, current_pe, df_yield, year_end = [
+            15, None, None, None, None, None]
         print("PE Calc failed: " + str(ex))
 
     df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
         lambda x: x*e_multiple)
     df_est["Median EPS"] = df_est["Median EPS"]*e_multiple
+
+    if style == "REIT":
+        print(normal_multiple_ocf)
+        df_yearly["ocf_norm"] = df_yearly[col_dict["ocf"]].apply(
+            lambda x: x*normal_multiple_ocf)
 
     e_total_norm = e_total * normal_multiple
     e_total = e_total * e_multiple
@@ -525,5 +563,8 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
         print("Probably no earnings: " + str(ex))
     # str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %"
 
-    return trace_base, trace_ratio, current_pe, normal_multiple, grw, grw_exp
+    if style == "REIT":
+        return trace_base, trace_ratio, current_pe, str(round(normal_multiple_ocf, 2)), grw, grw_exp
+    else:
+        return trace_base, trace_ratio, current_pe, normal_multiple, grw, grw_exp
     # return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)

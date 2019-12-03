@@ -104,7 +104,7 @@ app.layout = html.Div([
                     {'label': u'Base', 'value': 'Base'},
                     {'label': u'PE(15)', 'value': 'PE15'},
                     {'label': u'PEG(8.5)', 'value': 'PEG85'},
-                    {'label': u'FFO/OCF', 'value': 'REIT'},
+                    {'label': u'REIT(OCF)', 'value': 'REIT'},
                 ],
                 value='Base'
             )], style={'color': 'black', 'width': '120px', 'height': '40px'}),
@@ -150,12 +150,12 @@ app.layout = html.Div([
             ]),
     dbc.Row([
         dbc.Col([
-            dbc.Label('PE'),
+            html.Label(id='multiple', children='PE'),
             html.Div(dbc.Input(id='pe', type="text"), style={'width': '100px'})
         ], width="auto"),
 
         dbc.Col([
-            dbc.Label('Normal PE'),
+            html.Label(id='multiple_norm', children='Normal PE'),
             html.Div(dbc.Input(id='pe_norm', type="text"),
                      style={'width': '100px'})
         ], width="auto"),
@@ -196,7 +196,9 @@ app.layout = html.Div([
     Output('pe_norm', 'value'),
     Output('grw', 'value'),
     Output('grw_exp', 'value'),
-    Output('alert', 'is_open')],
+    Output('alert', 'is_open'),
+    Output('multiple', 'children'),
+    Output('multiple_norm', 'children'), ],
     [Input('update-input', 'n_clicks')],
     [State('ticker-input', 'value'),
      State('country-input', 'value'),
@@ -208,10 +210,14 @@ def update_graph_output(n_clicks, symbol, country, style, on):
         figure, figure_ratio, pe, pe_norm, grw, grw_exp = strg.update(
             country, symbol, style, on)
         print("Success.")
-        return figure, figure_ratio, str(pe), str(pe_norm), str(grw), str(grw_exp), False
+        if style == "REIT":
+            labelvar = ["P/OCF", "Normal P/OCF"]
+        else:
+            labelvar = ["PE", "Normal PE"]
+        return figure, figure_ratio, str(pe), str(pe_norm), str(grw), str(grw_exp), False, labelvar[0], labelvar[1]
     except Exception as ex:
         print("Main App Failure:", ex)
-        return init_fig, init_fig, None, None, None, None, True
+        return init_fig, init_fig, None, None, None, None, True, "PE", "Normal PE"
 
 
 app.css.append_css({
