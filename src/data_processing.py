@@ -175,7 +175,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     try:
         for i, x in enumerate(e_total):
             hvrtxt["eps"].append(
-                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
+                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=" + str(round(e_multiple, 2)) + ": " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
         for i, x in enumerate(e_total_norm):
             hvrtxt["pe_norm"].append(
                 "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
@@ -195,13 +195,14 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
         df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
             lambda x: x*e_multiple)
         try:
-            if 10 > len(df_yearly[col_dict["ocf"]]):
+            #TODO: add handler for year with fundamental, but no price data and vice versa; check if necessary?
+            if 10 > len(df_yearly[col_dict["ocf"]]) and False:
                 print(year_end)
                 year_end = year_end[(10-len(df_yearly[col_dict["ocf"]])):]
                 print(year_end)
             for i, x in enumerate(df_yearly[col_dict["ocf"]]):
                 hvrtxt["ocf"].append(
-                    "OCF: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
+                    "OCF: " + str(round(x/e_multiple, 2)) + "<br>Price @ P/OCF=" + str(round(e_multiple, 2)) + ": " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
             for i, x in enumerate(df_yearly["ocf_norm"]):
                 hvrtxt["ocf_norm"].append(
                     "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round(((x/year_end[i])-1)*100, 2)) + "%")
