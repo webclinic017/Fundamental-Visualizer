@@ -11,8 +11,9 @@ import plotly.graph_objs as go
 import pandas as pd
 import datetime
 # TODO: Add ratio yield switch
-# TODO: Add enterprise value
+# TODO: Add enterprise value (ev/fcf))
 # TODO: add data table
+# TODO: check difference unilever uk /us
 
 
 class Storage:
@@ -135,10 +136,14 @@ app.layout = html.Div([
             ], pills=True),
         ], width="auto"),
         dbc.Col([
+            dbc.Tooltip(
+                "This page costs 5$/month to run, any support is greatly appreciated.",
+                target="sponsor",
+            ),
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink("Sponsor", active=True,
                                         href="http://paypal.me/tobigsIO")),
-            ], pills=True),
+            ], pills=True, id='sponsor'),
         ], width="auto"),
     ], justify="between", align="center", style={'background-color': 'rgb(50,50,50)'}
     ),

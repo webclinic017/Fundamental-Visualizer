@@ -3,6 +3,7 @@
 # TODO: add decile to yield plot
 # TODO: Modularize gen_plt, pe_calc
 # TODO: add handler for irregular forcasting data (2018,2019,2021)
+# TODO: CBS bugfix Main App Failure: cannot reindex from a duplicate axiss
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go

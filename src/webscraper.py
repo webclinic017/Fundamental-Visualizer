@@ -131,11 +131,11 @@ def morningstar_data_est(symbol_morn):
 def gen_symbol(symbol, country):
     symbol = symbol.upper()
     df_exchange = pd.DataFrame(index=["Germany", "Hongkong", "Japan", "France", "Canada", "UK", "Switzerland", "Australia",
-                                      "Korea", "Netherlands", "Spain", "Russia", "Italy", "Belgium", "Mexiko", "Sweden", "Norway", "Finland", "Denmark"])
+                                      "Korea", "Netherlands", "Spain", "Russia", "Italy", "Belgium", "Mexiko", "Sweden", "Norway", "Finland", "Denmark", "Israel"])
     df_exchange["Morningstar"] = ["XETR:", "XHKG:", "XTKS:", "XPAR:", "XTSE:", "XLON:", "XSWX:", "XASX:",
                                   "XKRX:", "XAMS:", "XMAD:", "MISX:", "XMIL:", "XBRU:", "XMEX:", "XSTO:", "XOSL:", "XHEL:", "XCSE:"]
     df_exchange["Yahoo"] = [".DE", ".HK", ".T", ".PA", ".TO", ".L", ".SW", ".AX",
-                            ".KS", ".AS", ".MC", ".ME", ".MI", ".BR", ".MX", ".ST", ".OL", ".HE", ".CO"]
+                            ".KS", ".AS", ".MC", ".ME", ".MI", ".BR", ".MX", ".ST", ".OL", ".HE", ".CO"] # Israel: ".TA"] "XTAE:"]
 
     if country == "USA":
         symbol_morn = symbol
