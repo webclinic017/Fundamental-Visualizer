@@ -70,7 +70,7 @@ class Window(Frame):
         #print("Previous request: ",self.previous_request)
         if data_request[:2] != self.previous_request[:2] or self.previous_request == []:
             print("Requesting data...")
-            self.df_daily,self.df_yearly,self.df_est,self.currency = req_handle(*data_request)
+            self.df_daily,self.df_yearly,self.df_est,self.currency = req_handle(*data_request[:2])
             self.previous_request = data_request
             print("Data received.")
 

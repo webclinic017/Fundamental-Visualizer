@@ -1,6 +1,9 @@
+.gitignore
 .vscode/
 .gitignore
 data.txt
 graphs/
 src/__pycache__/
+src_tk/__pycache__/
 src/backup/
+plot.png
