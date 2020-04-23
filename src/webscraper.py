@@ -8,6 +8,7 @@ import os
 import subprocess
 import numpy as np
 import re
+import requests
 import json
 import datetime
 import pandas as pd
@@ -32,23 +33,10 @@ def yahoo_data(symbol_yhoo, start, end):
 
 
 def morningstar_data(symbol_morn):
-    # TODO: add handler for no returned data
-    mylink = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(
-        symbol_morn)
+    #TODO: add handler for no returned data
+    url1 = 'http://financials.morningstar.com/finan/financials/getFinancePart.html?&callback=xxx&t={}'.format(symbol_morn)
     #url2 = 'http://financials.morningstar.com/finan/financials/getKeyStatPart.html?&callback=xxx&t={}'.format(symbol_morn)
-
-    if web:
-        subprocess.check_call(["wget",  '-O', 'data.txt', '-S', mylink])
-    else:
-        print("Local WGET")
-        os.remove("data.txt")
-        wget.download(mylink, "data.txt")
-
-    f = open('data.txt', 'r')
-    obj = re.findall(r'xxx\((.*)\)', f.read())[0]
-    obj = json.loads(obj)['componentData']
-    soup1 = BeautifulSoup(obj, 'lxml')
-
+    soup1 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url1).text)[0])['componentData'], 'lxml')
     #soup2 = BeautifulSoup(json.loads(re.findall(r'xxx\((.*)\)', requests.get(url2).text)[0])['componentData'], 'lxml')
 
     data = []
@@ -61,53 +49,29 @@ def morningstar_data(symbol_morn):
         for j, td in enumerate(row_data):
             data.append(td)
 
-    for index, x in enumerate(data, 0):
-        data[index] = str(x).replace(',', '')
+    for index, x in enumerate(data,0):
+        data[index] = str(x).replace(',','')
 
-    if web:
-        x = [data[0], data[12], data[24], data[36], data[48], data[60], data[72], data[84],
-             data[96], data[108], data[120], data[132], data[144], data[156], data[168], data[180]]
-        arr = [data[1:12], data[13:24], data[25:36], data[37:48], data[49:60], data[61:72],  data[73:84], data[85:96],
-               data[97:108], data[109:120], data[121:132], data[133:144], data[145:156], data[157:168], data[169:180],  data[181:192]]
-        index = data[1:12]
-        df_yearly = pd.DataFrame(columns=x)
-        i = 0
-        for col in df_yearly:
-            df_yearly[col] = arr[i]
-            i = i+1
-        df_yearly.drop([10], inplace=True)
-        df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
-        df_yearly.columns = df_yearly.columns.str.strip()
-        df_yearly.set_index('Year', inplace=True)
-        df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
-        earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
-        morn_currency = str(earnings_col)[-5:-2]
-        return df_yearly, morn_currency
-    else:
-        print("Local DF_GEN")
-        arr = np.array([data[1:12], data[12:23], data[24:35], data[36:47], data[48:59], data[60:71],  data[72:83], data[84:95],
-                        data[96:107], data[108:119], data[120:131], data[132:143], data[144:155], data[156:167], data[168:179],  data[180:191]])
-        df_yearly = pd.DataFrame(arr.T, columns=[data[0], data[23], data[35], data[47], data[59], data[71], data[83],
-                                                 data[95], data[107], data[119], data[131], data[143], data[155], data[167], data[179], data[191]])
-        df_yearly.drop([10], inplace=True)
-        df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
-        df_yearly.columns = df_yearly.columns.str.strip()
-        df_yearly.set_index('Year', inplace=True)
-        df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
-        earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
-        morn_currency = str(earnings_col)[-5:-2]
-        return df_yearly, morn_currency
 
+    arr = np.array([data[1:11], data[13:23], data[25:35], data[37:47], data[49:59], data[61:71],  data[73:83], data[85:95], data[97:107], data[109:119], data[121:131], data[133:143], data[145:155], data[157:167], data[169:179],  data[181:191]])
+    print(arr)
+    df_yearly = pd.DataFrame(arr.T,columns=[data[0],data[12], data[24], data[36], data[48], data[60], data[72], data[84], data[106], data[108], data[120], data[132], data[144], data[156], data[168], data[180]])
+    #df_yearly.drop([10], inplace=True)
+    df_yearly['Year'] = pd.to_datetime(df_yearly['Year'])
+    df_yearly.columns = df_yearly.columns.str.strip()
+    df_yearly.set_index('Year', inplace=True)
+    df_yearly = df_yearly.apply(pd.to_numeric, errors='coerce')
+    earnings_col = [col for col in df_yearly.columns if 'Earn' in col]
+    morn_currency = str(earnings_col)[-5:-2]
+    return df_yearly, morn_currency
 
 def morningstar_data_est(symbol_morn):
-    df_est_full = pd.read_html(
-        r'http://financials.morningstar.com/valuate/annual-estimate-list.action?&t={}'.format(symbol_morn), keep_default_na=False)
+    df_est_full = pd.read_html(r'http://financials.morningstar.com/valuate/annual-estimate-list.action?&t={}'.format(symbol_morn),keep_default_na=False)
     df_est_full = pd.concat(df_est_full)
 
-    df_est = pd.DataFrame([[df_est_full[1][4], df_est_full[1][6]], [df_est_full[4][4], df_est_full[4][6]]], index=[
-                          df_est_full[2][0], df_est_full[5][0]], columns=["Median EPS", "Mean EPS"])
-    dropNames = df_est[df_est.index.values == "—"].index
-    df_est.drop(dropNames, inplace=True)
+    df_est = pd.DataFrame([[df_est_full[1][4],df_est_full[1][6]],[df_est_full[4][4],df_est_full[4][6]]],index=[df_est_full[2][0],df_est_full[5][0]],columns=["Median EPS","Mean EPS"])
+    dropNames = df_est[ df_est.index.values == "—" ].index
+    df_est.drop(dropNames , inplace=True)
     df_est.index = pd.to_datetime(df_est.index)
     df_est = df_est.apply(pd.to_numeric, errors='coerce')
 
@@ -121,10 +85,9 @@ def morningstar_data_est(symbol_morn):
     df_est_full.dropna(axis=0, how='any', inplace=True)
     header = df_est_full.iloc[0]
     df_est_full = df_est_full[1:]
-    df_est_full.rename(columns=header, inplace=True)
+    df_est_full.rename(columns = header, inplace=True)
     df_est_full.set_index(est_time, inplace=True)
-    # TODO: Improve est_curreny selection
-    est_currency = df_est_full.columns[3][:3]
+    est_currency = df_est_full.columns[3][:3] #TODO: Improve est_curreny selection
     return df_est, est_currency
 
 
@@ -135,7 +98,7 @@ def gen_symbol(symbol, country):
     df_exchange["Morningstar"] = ["XETR:", "XHKG:", "XTKS:", "XPAR:", "XTSE:", "XLON:", "XSWX:", "XASX:",
                                   "XKRX:", "XAMS:", "XMAD:", "MISX:", "XMIL:", "XBRU:", "XMEX:", "XSTO:", "XOSL:", "XHEL:", "XCSE:"]
     df_exchange["Yahoo"] = [".DE", ".HK", ".T", ".PA", ".TO", ".L", ".SW", ".AX",
-                            ".KS", ".AS", ".MC", ".ME", ".MI", ".BR", ".MX", ".ST", ".OL", ".HE", ".CO"]
+                            ".KS", ".AS", ".MC", ".ME", ".MI", ".BR", ".MX", ".ST", ".OL", ".HE", ".CO"] # Israel: ".TA"] "XTAE:"]
 
     if country == "USA":
         symbol_morn = symbol
