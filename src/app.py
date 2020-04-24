@@ -14,7 +14,6 @@ import datetime
 # TODO: Add enterprise value
 # add data table
 
-
 class Storage:
     def __init__(self):
         self.previous_request = []
@@ -42,8 +41,28 @@ init_fig = {'data': [], 'layout': go.Layout(paper_bgcolor='rgba(0,0,0,0)', plot_
     'showticklabels': False, 'ticks': '', 'showgrid': False, 'zeroline': False}, yaxis={'showticklabels': False, 'ticks': '', 'showgrid': False, 'zeroline': False})}
 strg = Storage()
 PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
-app = dash.Dash('FunViz', external_stylesheets=[dbc.themes.DARKLY])
+app = dash.Dash('FunViz', external_stylesheets=[dbc.themes.DARKLY]) 
 app.title = "FunViz"
+
+app.index_string = """<!DOCTYPE html>
+<html>
+    <head>
+        <script data-ad-client="ca-pub-4596163412984698" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>"""
+
 
 app.layout = html.Div([
     dbc.Row([
