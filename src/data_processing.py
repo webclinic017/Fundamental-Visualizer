@@ -34,23 +34,6 @@ def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw
 
         df_yield = pd.DataFrame(index=df_daily.index[:delta])
 
-        df_yield["blended_ocf"] = np.interp(df_yield.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly[col_dict["ocf"]])
-        df_yield["blended_fcf"] = np.interp(df_yield.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly[col_dict["fcf"]])
-        df_yield["blended_div"] = np.interp(df_yield.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly.index.values.astype(
-            'datetime64[D]').astype(int), df_yearly[col_dict["div"]])
-
-        df_yield["ocf_yield"] = df_yield["blended_ocf"] / \
-            df_daily["Close"][:delta]
-        df_yield["fcf_yield"] = df_yield["blended_fcf"] / \
-            df_daily["Close"][:delta]
-        df_yield["div_yield"] = df_yield["blended_div"] / \
-            df_daily["Close"][:delta]
-
     except Exception as ex:
         df_yield = pd.DataFrame()
         print("df_yield end generation failed: " + str(ex))
@@ -148,261 +131,47 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
     trace_base = go.Figure()
     trace_ratio = go.Figure()
     traces = [trace_base, trace_ratio]
-    try:
-        cut = (len(e_total_index_dt)-len(e_total))
-        xlabel = gen_xlabel(df_yearly, df_est)
-        ranger = {"x": [], "y": []}
-        hvrtxt = {"div": [], "eps": [], "pe_norm": [],
-                  "ocf": [], "price": [], "pe": []}
-        for x in df_daily["Close"]:
-            hvrtxt["price"].append(round(x, 2))
-        for x in df_daily["e_yield"]:
-            hvrtxt["pe"].append(round(x, 2))
-        for x in df_yearly[col_dict["div"]]:
-            hvrtxt["div"].append(x)
-        print("Created Hovertext.")
-    except Exception as ex:
-        print("Failed to generate Hovertext: " + str(ex))
-    try:
-        for i, x in enumerate(e_total):
-            hvrtxt["eps"].append(
-                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)) + "<br>Difference: " + str(round((year_end[i]/x-1)*100, 2)) + "%")
-        for x in e_total_norm:
-            hvrtxt["pe_norm"].append(
-                "Price @ Normal Multiple: " + str(round(x, 2)) + "<br>Difference: " + str(round((year_end[i]/x-1)*100, 2)) + "%")
-    except Exception as ex:
-        print("Hovertext w/ year_end failed: " + str(ex))
-        for i, x in enumerate(e_total):
-            hvrtxt["eps"].append(
-                "EPS: " + str(round(x/e_multiple, 2)) + "<br>Price @ PE=G: " + str(round(x, 2)))
-        for x in e_total_norm:
-            hvrtxt["pe_norm"].append(
-                "Price @ Normal Multiple: " + str(round(x, 2)))
 
-    if style == "REIT":
-        df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-            lambda x: x*15)
-        for x in df_yearly[col_dict["ocf"]]:
-            hvrtxt["ocf"].append(round(x, 2))
-        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-            lambda x: x*15)
-        ranger["x"].append(df_yearly.index.min())
-        ranger["x"].append(df_yearly.index.max())
-        ranger["y"].append(df_yearly[col_dict["ocf"]].min())
-        ranger["y"].append(df_yearly[col_dict["ocf"]].max())
-        trace_base.add_trace(go.Scatter(
-            x=df_yearly.index,
-            y=df_yearly[col_dict["ocf"]],
-            name="OCF/FFO",
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["ocf"],
-            marker=dict(
-                color='white',
-                size=9,
-                line=dict(
-                    color='grey',
-                    width=2
-                )),
-            line=dict(color='grey', width=4),
-            fill='tozeroy',
-            fillcolor='rgb(55,91,187)'))
-        trace_base.add_trace(go.Scatter(
-            x=df_yearly.index,
-            y=df_yearly[col_dict["div"]],
-            name="Dividend",
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["div"],
-            marker=dict(
-                color='yellow',
-                size=8),
-            line=dict(color='yellow', width=3),
-            opacity=0.8))
-        trace_base.add_trace(go.Scatter(
-            x=df_daily.index,
-            y=df_daily["Close"],
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["price"],
-            name="Price",
-            line_color='white'))
-        trace_base.layout.xaxis.range = [ranger["x"][0], df_daily.index.max()]
-        df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-            lambda x: x*(1/15))
-        df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-            lambda x: x*(1/15))
-    else:
-        trace_base.add_trace(go.Scatter(
-            x=pd.to_datetime(e_total_index_dt),
-            y=e_total,
-            name="EPS",
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["eps"],
-            marker=dict(
-                color='white',
-                size=9,
-                line=dict(
-                    color='grey',
-                    width=2
-                )),
-            line=dict(color='grey', width=4),
-            fill='tozeroy',
-            fillcolor='rgb(55,91,187)'))
-        try:
-            for x in df_yearly[col_dict["ocf"]]:
-                hvrtxt["ocf"].append(round(x, 2))
-            df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-                lambda x: x*e_multiple)
-            df_yearly[col_dict["fcf"]] = df_yearly[col_dict["fcf"]].apply(
-                lambda x: x*e_multiple)
-            trace_base.add_trace(go.Scatter(
-                x=df_yearly.index,
-                y=df_yearly[col_dict["ocf"]],
-                name="OCF",
-                hoverinfo="x+text+name",
-                hovertext=hvrtxt["ocf"],
-                line=dict(color='crimson', width=2),
-                marker=dict(
-                    color='white',
-                    size=9,
-                    line=dict(
-                        color='crimson',
-                        width=2
-                    )),
-                fill='tozeroy',
-                fillcolor='rgba(174, 200, 240, 0.3)',
-                visible='legendonly', opacity=0.8))
-            #'rgba(99, 125, 165, 1)'
-            trace_base.add_trace(go.Scatter(
-                x=df_yearly.index,
-                y=df_yearly[col_dict["fcf"]],
-                name="FCF",
-                line=dict(color='limegreen', width=2),
-                marker=dict(
-                    color='white',
-                    size=9,
-                    line=dict(
-                        color='limegreen',
-                        width=2
-                    )),
-                fill='tozeroy',
-                fillcolor='rgba(174, 200, 240, 0.3)',
-                visible='legendonly', opacity=0.8))
-            df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]].apply(
-                lambda x: x*(1/e_multiple))
-            df_yearly[col_dict["fcf"]] = df_yearly[col_dict["fcf"]].apply(
-                lambda x: x*(1/e_multiple))
-        except Exception as ex:
-            print("OCF plot failed: " + str(ex))
-        trace_base.add_trace(go.Scatter(
-            x=pd.to_datetime(e_total_index_dt),
-            y=e_total_norm,
-            name="Normal PE",
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["pe_norm"],
-            marker=dict(
-                color='orange',
-                size=8),
-            line=dict(color='orange', width=3),
-            opacity=0.8))
-        try:
-            df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-                lambda x: x*e_multiple)
-            trace_base.add_trace(go.Scatter(
-                x=pd.to_datetime(df_yearly.index),
-                y=df_yearly[col_dict["div"]],
-                name="Dividend",
-                hoverinfo="x+text+name",
-                hovertext=hvrtxt["div"],
-                marker=dict(
-                    color='yellow',
-                    size=8),
-                line=dict(color='yellow', width=3),
-                opacity=0.8))
-            df_yearly[col_dict["div"]] = df_yearly[col_dict["div"]].apply(
-                lambda x: x*(1/e_multiple))
-        except Exception as ex:
-            print(ex)
-        trace_base.add_trace(go.Scatter(
-            x=(df_daily.index),
-            y=df_daily["Close"],
-            hoverinfo="x+text+name",
-            hovertext=hvrtxt["price"],
-            name="Price",
-            line_color='white'))
-        print("Added data to plot.")
-        try:
-            ranger["x"].append(pd.to_datetime(e_total_index_dt.min()))
-            ranger["x"].append(pd.to_datetime(e_total_index_dt.max()))
-            ranger["y"].append((e_total.min()))
-            ranger["y"].append((e_total.max()))
-            trace_base.layout.xaxis.range = [ranger["x"][0], ranger["x"][1]]
-        except Exception as ex:
-            print("Couldn't set x Limits.")
-    try:
-        ranger["x"].append(df_daily.index.min())
-        ranger["x"].append(df_daily.index.max())
-        ranger["y"].append(df_daily["e_yield"].min())
-        ranger["y"].append(df_daily["e_yield"].max())
-        trace_ratio.add_trace(go.Scatter(
-            x=df_daily.index,
-            y=df_daily["e_yield"],
-            line_color='SteelBlue ',
-            name="Earnings"))
-        trace_ratio.add_trace(go.Scatter(
-            x=df_yield.index,
-            y=df_yield["ocf_yield"],
-            line_color='coral',
-            name="OCF")),
-        trace_ratio.add_trace(go.Scatter(
-            x=df_yield.index,
-            y=df_yield["fcf_yield"],
-            line_color='orange',
-            name="FCF"))
-        trace_ratio.add_trace(go.Scatter(
-            x=df_yield.index,
-            y=df_yield["div_yield"],
-            line_color='yellow',
-            name="Dividend")),
-        maxvar = 1.0
-        minvar = 0.0
-        extrema_list = []
-        for x in df_yield.loc[:, 'ocf_yield':].columns:
-            if 1 > df_yield[x].max() >= 0:
-                extrema_list.append(df_yield[x].max())
-            if 1 > df_yield[x].min() >= 0:
-                extrema_list.append(df_yield[x].min())
-        extrema_list.append(df_daily["e_yield"].max())
-        extrema_list.append(df_daily["e_yield"].min())
-        if max(extrema_list) < maxvar:
-            maxvar = max(extrema_list)
-        if min(extrema_list) > minvar:
-            minvar = min(extrema_list)-0.001
-        trace_ratio.update_yaxes(title_text="Yield")
-        print(minvar, maxvar)
-        trace_ratio.layout.yaxis.range = [minvar, maxvar]
-    except Exception as ex:
-        print("Ratio-Plot failed: " + str(ex))
+    trace_base.add_trace(go.Scatter(
+    x=pd.to_datetime(e_total_index_dt),
+    y=e_total,
+    name="EPS",
+    hoverinfo="x+text+name",
+    marker=dict(
+        color='white',
+        size=9,
+        line=dict(
+            color='grey',
+            width=2
+        )),
+    line=dict(color='grey', width=4),
+    fill='tozeroy',
+    fillcolor='rgb(55,91,187)'))
 
-    df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
-        lambda x: x*(1/e_multiple))
-    df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
-    df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]] * \
-        df_yearly[col_dict["shrs"]]
+    trace_base.add_trace(go.Scatter(
+        x=pd.to_datetime(e_total_index_dt),
+        y=e_total_norm,
+        name="Normal PE",
+        hoverinfo="x+text+name",
+        marker=dict(
+            color='orange',
+            size=8),
+        line=dict(color='orange', width=3),
+        opacity=0.8))
 
-    #TODO: Put in layout
+    trace_base.add_trace(go.Scatter(
+        x=(df_daily.index),
+        y=df_daily["Close"],
+        hoverinfo="x+text+name",
+        name="Price",
+        line_color='white'))
+
+    trace_base.layout.title = symbol.upper()
+    trace_ratio.layout.title = symbol.upper() + " - Yield Graph"
     for x in traces:
         x.layout.template = 'plotly_dark'
         x.layout.plot_bgcolor = 'rgb(35,35,35)'
         x.layout.paper_bgcolor = 'rgb(35,35,35)'
-    # trace_base.layout.xaxis=dict(showgrid=False)
-    # trace_base.layout.yaxis=dict(showgrid=False)
-    try:
-        trace_base.layout.xaxis.nticks = len(e_total_index_dt)
-        trace_base.layout.xaxis.tick0 = pd.to_datetime(e_total_index_dt[0])
-    except Exception as ex:
-        print("Couldn't modify ticks: " + str(ex))
-
-    trace_base.layout.title = symbol.upper()
-    trace_ratio.layout.title = symbol.upper() + " - Yield Graph"
     for x in traces:
         x.layout.height = 575
         x.layout.yaxis.showline = True
@@ -429,17 +198,7 @@ def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_tota
 
 def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_switch):
 
-    earnings_col = df_yearly.filter(like='Earn').columns[0]
-    fcf_col = df_yearly.filter(like='Free Cash Flow Per').columns[0]
-    ocf_col = df_yearly.filter(like='Operating Cash Fl').columns[0]
-    dividend_col = df_yearly.filter(like='Divid').columns[0]
-    shares_col = df_yearly.filter(like='Shares').columns[0]
-    col_dict = {"e": earnings_col, "ocf": ocf_col,
-                "div": dividend_col, "shrs": shares_col, "fcf": fcf_col}
-
-    # ocf/share
-    df_yearly[col_dict["ocf"]] = df_yearly[col_dict["ocf"]] / \
-        df_yearly[col_dict["shrs"]]
+    col_dict = {"e": "epsActual"}
 
     # TODO: implement col_dict in data_processing
     e_total = np.append(pd.to_numeric(df_yearly[col_dict["e"]].values, errors='coerce'), pd.to_numeric(
