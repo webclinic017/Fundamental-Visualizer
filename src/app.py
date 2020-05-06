@@ -36,6 +36,9 @@ class Storage:
         print("Data processed.")
         return trace_base, trace_ratio, pe, pe_norm, grw, grw_exp
 
+df_ticker=pd.read_csv('spx.csv',usecols=[1,2]) 
+df_ticker["label"] = df_ticker["label"] + " (" + df_ticker["value"] + ")"
+dict_data = df_ticker.to_dict('records')
 
 init_fig = {'data': [], 'layout': go.Layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis={
     'showticklabels': False, 'ticks': '', 'showgrid': False, 'zeroline': False}, yaxis={'showticklabels': False, 'ticks': '', 'showgrid': False, 'zeroline': False})}
@@ -73,49 +76,6 @@ app.layout = html.Div([
         dbc.Col([html.H2("FunViz"), html.Div(html.Label(
             "Fundamentals Visualizer"), style={'font-size': 13})], width="auto"),
         dbc.Col([
-            html.Label('Country: '),
-            html.Div([dcc.Dropdown(id='country-input',
-                                   options=[
-                                       {'label': u'USA',
-                                        'value': 'USA'},
-                                       {'label': u'Germany',
-                                        'value': 'Germany'},
-                                       {'label': u'Hongkong',
-                                        'value': 'Hongkong'},
-                                       {'label': u'Japan',
-                                        'value': 'Japan'},
-                                       {'label': u'France',
-                                        'value': 'France'},
-                                       {'label': u'UK', 'value': 'UK'},
-                                       {'label': u'Switzerland',
-                                        'value': 'Switzerland'},
-                                       {'label': u'Australia',
-                                        'value': 'Australia'},
-                                       {'label': u'Korea',
-                                        'value': 'Korea'},
-                                       {'label': u'Netherlands',
-                                        'value': 'Netherlands'},
-                                       {'label': u'Spain',
-                                        'value': 'Spain'},
-                                       {'label': u'Russia',
-                                        'value': 'Russia'},
-                                       {'label': u'Italy',
-                                        'value': 'Italy'},
-                                       {'label': u'Belgium',
-                                        'value': 'Belgium'},
-                                       {'label': u'Sweden',
-                                        'value': 'Sweden'},
-                                       {'label': u'Norway',
-                                        'value': 'Norway'},
-                                       {'label': u'Finland',
-                                        'value': 'Finland'},
-                                       {'label': u'Denmark',
-                                        'value': 'Denmark'},
-                                   ],
-                                   value='USA'
-                                   )],  style={'color': 'black', 'width': '150px', 'height': '40px'}),
-        ], width="auto"),
-        dbc.Col([
             html.Label('Style: '),
             html.Div([dcc.Dropdown(
                 id='style-input',
@@ -129,9 +89,13 @@ app.layout = html.Div([
             )], style={'color': 'black', 'width': '120px', 'height': '40px'}),
         ], width="auto"),
         dbc.Col([
-            html.Label('Ticker: '),
-            html.Div([dbc.Input(id="ticker-input", type="text",
-                                value='AAPL')], style={'width': '100px', 'height': '40px'}),
+            html.Label('Stock: '),
+            html.Div([dcc.Dropdown(id="ticker-input", options=[*dict_data
+                    #{'label': u'Apple (AAPL)', 'value': 'AAPL'},
+                    #{'label': u'Alphabet (GOOGL)', 'value': 'GOOGL'},
+                ],
+                value='AAPL'
+                )], style={'color': 'black', 'width': '240px', 'height': '40px'}),
         ], width="auto"),
         dbc.Col([
             dbc.Tooltip(
@@ -218,14 +182,13 @@ app.layout = html.Div([
     Output('alert', 'is_open')],
     [Input('update-input', 'n_clicks')],
     [State('ticker-input', 'value'),
-     State('country-input', 'value'),
      State('style-input', 'value'),
      State('bool-switch', 'on')]
 )
-def update_graph_output(n_clicks, symbol, country, style, on):
+def update_graph_output(n_clicks, symbol, style, on):
     try:
         figure, figure_ratio, pe, pe_norm, grw, grw_exp = strg.update(
-            country, symbol, style, on)
+            "USA", symbol, style, on)
         print("Success.")
         return figure, figure_ratio, str(pe), str(pe_norm), str(grw), str(grw_exp), False
     except Exception as ex:
