@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # TODO: function for reverting dataframes after multiplication with e_multiple
 # TODO: add decile to yield plot
-# TODO: Try if style==REIT set earnings_col = ocf_col
+# TODO: Try if metric==REIT set earnings_col = ocf_col
 import pandas as pd
 import numpy as np
-import plotly.graph_objs as go
+from plot_generation import gen_plt
 
 
-def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw_exp, style, col_dict):
+
+def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, mc_ev, grw_exp, metric, col_dict):
     e_multiple = 15
     delta = None
     year_end = []
@@ -40,30 +41,35 @@ def pe_calc(df_daily, df_yearly, e_total_index_dt, e_total, grw, exp_switch, grw
 
     df_daily["blended_earnings"] = np.interp(df_daily.index.values.astype(
         'datetime64[D]').astype(int), e_total_index_dt, e_total)
+    #print(df_daily["blended_ev"])
     df_daily["blended_pe"] = df_daily["Close"]/df_daily["blended_earnings"]
     df_daily["e_yield"] = df_daily["blended_earnings"]/df_daily["Close"]
 
     #normal_multiple_deprecated = df_daily["e_yield"].mean()
     normal_multiple = df_daily["blended_pe"].agg(lambda x: x[x > 0].median())
     current_pe = df_daily["blended_pe"].iloc[-1]
-    if exp_switch:
-        e_multiple = grw_exp
+    if mc_ev:
+        pass
+        #e_multiple = grw_exp
+    else:
+        pass
+        #e_multiple = grw
+    if grw<15:
+        e_multiple = 15
     else:
         e_multiple = grw
 
-    if style == "PE15":
+    if metric == "PE15":
         e_multiple = 15.0
     elif e_multiple != None and not pd.isnull(e_multiple):
-        if style == "Base":
+        if metric == "Base":
             if e_multiple < 15.0:
                 e_multiple = 15.0
-        elif style == "PEG85":
+        elif metric == "PEG85":
             if e_multiple < 0:
                 e_multiple = 8.5
             else:
                 e_multiple = e_multiple + 8.5
-    else:
-        e_multiple = 15
 
     return e_multiple, normal_multiple, current_pe, df_yield, year_end_vals
 
@@ -125,78 +131,7 @@ def likely_deprecated(df_est):
             pass
             #print("**DEBUG-PRINT** pd.isnull(for x in df_est.index.values) == True")
 
-
-def gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm, e_total_index_dt, style, currency, symbol, col_dict, e_multiple, year_end):
-    # TODO: Improve this function
-    trace_base = go.Figure()
-    trace_ratio = go.Figure()
-    traces = [trace_base, trace_ratio]
-
-    trace_base.add_trace(go.Scatter(
-    x=pd.to_datetime(e_total_index_dt),
-    y=e_total,
-    name="EPS",
-    hoverinfo="x+text+name",
-    marker=dict(
-        color='white',
-        size=9,
-        line=dict(
-            color='grey',
-            width=2
-        )),
-    line=dict(color='grey', width=4),
-    fill='tozeroy',
-    fillcolor='rgb(55,91,187)'))
-
-    trace_base.add_trace(go.Scatter(
-        x=pd.to_datetime(e_total_index_dt),
-        y=e_total_norm,
-        name="Normal PE",
-        hoverinfo="x+text+name",
-        marker=dict(
-            color='orange',
-            size=8),
-        line=dict(color='orange', width=3),
-        opacity=0.8))
-
-    trace_base.add_trace(go.Scatter(
-        x=(df_daily.index),
-        y=df_daily["Close"],
-        hoverinfo="x+text+name",
-        name="Price",
-        line_color='white'))
-
-    trace_base.layout.title = symbol.upper()
-    trace_ratio.layout.title = symbol.upper() + " - Yield Graph"
-    for x in traces:
-        x.layout.template = 'plotly_dark'
-        x.layout.plot_bgcolor = 'rgb(35,35,35)'
-        x.layout.paper_bgcolor = 'rgb(35,35,35)'
-    for x in traces:
-        x.layout.height = 575
-        x.layout.yaxis.showline = True
-        x.layout.xaxis.zerolinecolor = "rgb(255, 255, 255)"
-        x.layout.xaxis.gridcolor = "rgb(35,35,35)"
-        x.layout.yaxis.zerolinecolor = "rgb(255, 255, 255)"
-        x.layout.xaxis.linecolor = "rgb(35,35,35)"
-        x.layout.yaxis.linecolor = "rgb(35,35,35)"
-        x.layout.yaxis.gridcolor = "rgb(35,35,35)"
-
-    # trace_base.layout.xaxis.mirror=True
-    # trace_base.layout.xaxis.ticks='outside'
-    #tickmode = 'array',
-    #tickvals = pd.to_datetime(e_total_index_dt),
-    #ticktext =  xlabel
-    trace_base.update_yaxes(title_text=currency)
-    trace_base.layout.yaxis.autorange = True
-    trace_base.layout.yaxis.rangemode = 'nonnegative'
-    trace_ratio.layout.yaxis.tickformat = ',.0%'
-    trace_ratio.update_yaxes(hoverformat=",.2%")
-
-    return trace_base, trace_ratio
-
-
-def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_switch):
+def data_processing(df_daily, df_yearly, df_est, symbol, metric,  mc_ev,currency,):
 
     col_dict = {"e": "epsActual"}
 
@@ -237,7 +172,7 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
         print("Growth Calc failed: " + str(ex))
     try:
         e_multiple, normal_multiple, current_pe, df_yield, year_end = pe_calc(
-            df_daily, df_yearly, e_total_index_int, e_total, grw, exp_switch, grw_exp, style, col_dict)
+            df_daily, df_yearly, e_total_index_int, e_total, grw, mc_ev, grw_exp, metric, col_dict)
     except Exception as ex:
         e_multiple, normal_multiple, current_pe, df_yield, year_end = [
             15, None, None, None, None]
@@ -256,11 +191,20 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
     #self.disp_pe_norm["text"] = str(round(pe_norm, 2))
     #self.disp_grw["text"] = str(round(grw, 2)) + " %"
     #self.disp_grw_exp["text"] = str(round(grw_exp, 2)) + " %"
-
+    df_daily["blended_ev"] = np.interp(df_daily.index.values.astype(
+    'datetime64[D]').astype(int), df_yearly.index.values.astype(
+    'datetime64[D]').astype(int), df_yearly["ev_delta"])
+    df_daily["price_adj"] = df_daily["Close"] +df_daily["blended_ev"]
+    print(df_daily["blended_ev"])
+    print(df_daily["Close"])
+    if mc_ev:
+        df_daily["Close"] = df_daily["price_adj"]
+        print("EV")
+    print(df_daily["Close"])
     # TODO: gen_plt better not as function?
     try:
         trace_base, trace_ratio = gen_plt(df_yearly, df_daily, df_yield, df_est, e_total, e_total_norm,
-                                          e_total_index_dt, style, currency, symbol, col_dict, e_multiple, year_end)
+                                          e_total_index_dt, metric, currency, symbol, col_dict, e_multiple, year_end)
     except Exception as ex:
         print("Plot generation failed:" + str(ex))
 
@@ -280,5 +224,11 @@ def data_processing(df_daily, df_yearly, df_est, symbol, style, currency, exp_sw
     print(current_pe, normal_multiple, grw, grw_exp)
     # str(round(current_pe, 2)), str(round(normal_multiple, 2)), (str(round(grw, 2)) + " %"), (str(round(grw_exp, 2)) + " %"
 
+    df_yearly[col_dict["e"]] = df_yearly[col_dict["e"]].apply(
+        lambda x: x*(1/e_multiple))
+    df_est["Median EPS"] = df_est["Median EPS"]*(1/e_multiple)
+    if mc_ev:
+        df_daily["Close"] = df_daily["Close"] -df_daily["blended_ev"]
+
     return trace_base, trace_ratio, current_pe, normal_multiple, grw, grw_exp
-    # return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,style,currency,symbol,col_dict, e_multiple)
+    # return(df_yearly,df_daily,df_est,e_total,e_total_norm,e_total_index_dt,metric,currency,symbol,col_dict, e_multiple)

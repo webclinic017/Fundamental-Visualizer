@@ -127,7 +127,8 @@ def currency_conv(df_daily, df_yearly, df_est, yahoo_currency, est_currency, cur
         df_daily["Close"] = df_daily["Close"].apply(lambda x: x*(1/100))
 
 
-def req_handle(country, symbol):
+def req_handle(symbol):
+    country = "USA"
     symbol_morn, symbol_yhoo = gen_symbol(symbol, country)
     df_yearly, morn_currency = get_eps(symbol_morn)
     df_est, est_currency = morningstar_data_est(symbol_morn)

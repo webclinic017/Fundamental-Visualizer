@@ -3,7 +3,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-from dash_daq import BooleanSwitch
+from dash_daq import ToggleSwitch
 from dash.dependencies import Input, Output, State
 from webscraper import req_handle
 from data_processing import data_processing
@@ -16,21 +16,19 @@ import datetime
 
 class Storage:
     def __init__(self):
-        self.previous_request = []
+        self.previous_request = ["MSFT"]
 
-    def update(self, country, symbol, style, on):
-        print(country, symbol, style)
-        data_request = [country, symbol, style]
-        print("Request: ", data_request)
-        if data_request[:2] != self.previous_request[:2] or self.previous_request == []:
+    def update(self, symbol, metric, mc_ev):
+        request = [symbol,metric, mc_ev]
+        print("Request: ", request)
+        if request[0] != self.previous_request[0] or self.previous_request == []:
             print("Requesting data...")
-            self.df_daily, self.df_yearly, self.df_est, self.currency = req_handle(
-                *data_request[:2])
-            self.previous_request = data_request
+            self.df_daily, self.df_yearly, self.df_est, self.currency = req_handle(request[0])
+            self.previous_request = request
             print("Data received.")
         print("Processing data...")
         processing_request = [self.df_daily, self.df_yearly,
-                              self.df_est, *data_request[1:], self.currency, on]
+                              self.df_est, *request, self.currency]
         trace_base, trace_ratio, pe, pe_norm, grw, grw_exp = data_processing(
             *processing_request)
         print("Data processed.")
@@ -74,25 +72,23 @@ app.layout = html.Div([
     dbc.Row([
         dbc.Col([html.Img(src=PLOTLY_LOGO, height="90px")], width="auto"),
         dbc.Col([html.H2("FunViz"), html.Div(html.Label(
-            "Fundamentals Visualizer"), style={'font-size': 13})], width="auto"),
+            "FunViz 2.0 (beta)"), style={'font-size': 13})], width="auto"),
         dbc.Col([
-            html.Label('Style: '),
+            html.Label('Metric: '),
             html.Div([dcc.Dropdown(
-                id='style-input',
+                id='metric-input',
                 options=[
-                    {'label': u'Base', 'value': 'Base'},
-                    {'label': u'PE(15)', 'value': 'PE15'},
-                    {'label': u'PEG(8.5)', 'value': 'PEG85'},
-                    {'label': u'FFO/OCF', 'value': 'REIT'},
+                    {'label': u'EPS', 'value': 'EPS'},
+                    {'label': u'FCF', 'value': 'FCF','disabled': True},
+                    {'label': u'OCF', 'value': 'OCF','disabled': True},
                 ],
-                value='Base'
+                value='EPS'
             )], style={'color': 'black', 'width': '120px', 'height': '40px'}),
         ], width="auto"),
         dbc.Col([
             html.Label('Stock: '),
             html.Div([dcc.Dropdown(id="ticker-input", options=[*dict_data
                     #{'label': u'Apple (AAPL)', 'value': 'AAPL'},
-                    #{'label': u'Alphabet (GOOGL)', 'value': 'GOOGL'},
                 ],
                 value='AAPL'
                 )], style={'color': 'black', 'width': '240px', 'height': '40px'}),
@@ -101,11 +97,12 @@ app.layout = html.Div([
             dbc.Tooltip(
                 "If enabled, expected growth rate "
                 "is used for multiple calculation, otherwise historical growth rate is used.",
-                target="bool-switch",
+                target="mc_ev-switch",
             ),
             html.Div([
-                BooleanSwitch(id='bool-switch', color='rgb(55, 90, 127);',
-                              vertical=False, on=False, label='Exp. Grw', labelPosition="top")
+                ToggleSwitch(id='mc_ev-switch',
+                              vertical=True, value=False, label='EV', labelPosition="top"), #color='rgb(55, 90, 127);'
+                              dbc.Label('Market Cap.'),
             ], id='bool-switch-output')
         ], width="auto"),
         dbc.Col([
@@ -114,7 +111,7 @@ app.layout = html.Div([
         dbc.Col([
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink(
-                    "ReadMe", active=True, href="https://github.com/tobigs/FunViz", external_link=True)),
+                    "FunViz 1.0", active=True, href="www.tobigs.de", external_link=True)),
             ], pills=True),
         ], width="auto"),
         dbc.Col([
@@ -133,12 +130,12 @@ app.layout = html.Div([
             ]),
     dbc.Row([
         dbc.Col([
-            dbc.Label('PE'),
+            dbc.Label('Multiple'),
             html.Div(dbc.Input(id='pe', type="text"), style={'width': '100px'})
         ], width="auto"),
 
         dbc.Col([
-            dbc.Label('Normal PE'),
+            dbc.Label('Normal Multiple'),
             html.Div(dbc.Input(id='pe_norm', type="text"),
                      style={'width': '100px'})
         ], width="auto"),
@@ -168,7 +165,6 @@ app.layout = html.Div([
     )], justify="center"),
     dcc.Graph(id='graph-base', figure=init_fig),
     dcc.Graph(id='graph-ratio', figure=init_fig),
-
 ])
 
 
@@ -182,13 +178,14 @@ app.layout = html.Div([
     Output('alert', 'is_open')],
     [Input('update-input', 'n_clicks')],
     [State('ticker-input', 'value'),
-     State('style-input', 'value'),
-     State('bool-switch', 'on')]
+     State('metric-input', 'value'),
+     State('mc_ev-switch', 'value')]
 )
-def update_graph_output(n_clicks, symbol, style, on):
+def update_graph_output(n_clicks, symbol, metric, mc_ev):
+    print(symbol, metric, mc_ev)
     try:
         figure, figure_ratio, pe, pe_norm, grw, grw_exp = strg.update(
-            "USA", symbol, style, on)
+            symbol, metric, mc_ev)
         print("Success.")
         return figure, figure_ratio, str(pe), str(pe_norm), str(grw), str(grw_exp), False
     except Exception as ex:
